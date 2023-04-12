@@ -1,3 +1,5 @@
+email_notification_event_topic: notifications
+email_notification_event_type: email_notification
 kafka_servers:
 - kafka:9092
 service_instance_id: '1'

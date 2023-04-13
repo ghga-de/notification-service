@@ -15,7 +15,7 @@
 
 """Test dummy."""
 import pytest
-from hexkit.providers.akafka.testutils import ExpectedEvent, kafka_fixture  # noqa: F401
+from hexkit.providers.akafka.testutils import kafka_fixture  # noqa: F401
 
 from tests.fixtures.joint import JointFixture, joint_fixture  # noqa: F401
 
@@ -25,8 +25,8 @@ async def test_basic_consume(joint_fixture: JointFixture):  # noqa: F811
     """Verify that the consumer runs the dummy _send_email() and raises the error."""
     await joint_fixture.kafka.publish_event(
         payload={"key": "value"},
-        type_=joint_fixture.config.email_notification_event_type,
-        topic=joint_fixture.config.email_notification_event_topic,
+        type_=joint_fixture.config.notification_event_type,
+        topic=joint_fixture.config.notification_event_topic,
     )
 
     event_subscriber = await joint_fixture.container.kafka_event_subscriber()

@@ -22,28 +22,27 @@ from pydantic import BaseSettings, Field
 class EventSubTranslatorConfig(BaseSettings):
     """Config for the event subscriber"""
 
-    email_notification_event_topic: str = Field(
+    notification_event_topic: str = Field(
         ...,
-        description="Name of the event topic used to track email notification events",
+        description="Name of the event topic used to track notification events",
         example="notifications",
     )
-    email_notification_event_type: str = Field(
+    notification_event_type: str = Field(
         ...,
-        description="The type to use for events containing content to be sent as an"
-        + "email notification.",
-        example="email_notification",
+        description="The type to use for events containing content to be sent",
+        example="notification",
     )
 
 
 class EventSubTranslator(EventSubscriberProtocol):
-    """A translator that can consume Email Notification events"""
+    """A translator that can consume Notification events"""
 
     def __init__(self, *, config: EventSubTranslatorConfig):
-        self.topics_of_interest = [config.email_notification_event_topic]
-        self.types_of_interest = [config.email_notification_event_type]
+        self.topics_of_interest = [config.notification_event_topic]
+        self.types_of_interest = [config.notification_event_type]
         self._config = config
 
-    async def _send_email_notification(self, *, payload: JsonObject):
+    async def _send_notification(self, *, payload: JsonObject):
         """Validates the schema, then makes a call to the notifier with the payload"""
         raise NotImplementedError()
 
@@ -52,7 +51,7 @@ class EventSubTranslator(EventSubscriberProtocol):
     ) -> None:
         """Consumes an event"""
         if (
-            type_ == self._config.email_notification_event_type
-            and topic == self._config.email_notification_event_topic
+            type_ == self._config.notification_event_type
+            and topic == self._config.notification_event_topic
         ):
-            await self._send_email_notification(payload=payload)
+            await self._send_notification(payload=payload)

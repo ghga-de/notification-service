@@ -1,6 +1,6 @@
 # Please only mention the non-default settings here:
 
-email_notification_event_topic: "notifications"
-email_notification_event_type: "email_notification"
+notification_event_topic: "notifications"
+notification_event_type: "notification"
 service_instance_id: 001
 kafka_servers: ["kafka:9092"]

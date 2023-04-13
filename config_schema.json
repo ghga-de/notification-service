@@ -3,21 +3,21 @@
   "description": "Modifies the orginal Settings class provided by the user",
   "type": "object",
   "properties": {
-    "email_notification_event_topic": {
-      "title": "Email Notification Event Topic",
-      "description": "Name of the event topic used to track email notification events",
+    "notification_event_topic": {
+      "title": "Notification Event Topic",
+      "description": "Name of the event topic used to track notification events",
       "example": "notifications",
       "env_names": [
-        "ns_email_notification_event_topic"
+        "ns_notification_event_topic"
       ],
       "type": "string"
     },
-    "email_notification_event_type": {
-      "title": "Email Notification Event Type",
-      "description": "The type to use for events containing content to be sent as anemail notification.",
-      "example": "email_notification",
+    "notification_event_type": {
+      "title": "Notification Event Type",
+      "description": "The type to use for events containing content to be sent",
+      "example": "notification",
       "env_names": [
-        "ns_email_notification_event_type"
+        "ns_notification_event_type"
       ],
       "type": "string"
     },
@@ -54,8 +54,8 @@
     }
   },
   "required": [
-    "email_notification_event_topic",
-    "email_notification_event_type",
+    "notification_event_topic",
+    "notification_event_type",
     "service_instance_id",
     "kafka_servers"
   ],

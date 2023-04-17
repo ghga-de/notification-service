@@ -13,18 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test dummy."""
+"""Test basic event consumption"""
 import pytest
+from ghga_event_schemas import pydantic_ as event_schemas
 from hexkit.providers.akafka.testutils import kafka_fixture  # noqa: F401
 
+from ns.core.notifier import Notifier
+from tests.fixtures.config import get_config
 from tests.fixtures.joint import JointFixture, joint_fixture  # noqa: F401
 
 
 @pytest.mark.asyncio
-async def test_basic_consume(joint_fixture: JointFixture):  # noqa: F811
-    """Verify that the consumer runs the dummy _send_email() and raises the error."""
+async def test_basic_path(joint_fixture: JointFixture):  # noqa: F811
+    """Verify that the event is correctly translated into a basic email object"""
     await joint_fixture.kafka.publish_event(
-        payload={"key": "value"},
+        payload={
+            "recipient_email": "test@example.com",
+            "email_cc": [],
+            "email_bcc": [],
+            "subject": "Test123",
+            "recipient_name": "Yolanda Martinez",
+            "plaintext_body": "Where are you, where are you, Yolanda?",
+        },
         type_=joint_fixture.config.notification_event_type,
         topic=joint_fixture.config.notification_event_topic,
     )
@@ -32,3 +42,33 @@ async def test_basic_consume(joint_fixture: JointFixture):  # noqa: F811
     event_subscriber = await joint_fixture.container.kafka_event_subscriber()
     with pytest.raises(NotImplementedError):
         await event_subscriber.run(forever=False)
+
+
+@pytest.mark.asyncio
+async def test_email_construction():
+    """Verify that the email is getting constructed properly from the template."""
+    notification = event_schemas.Notification(
+        recipient_email="test@example.com",  # type: ignore[assignment]
+        email_cc=[],
+        email_bcc=[],
+        subject="Test123",
+        recipient_name="Yolanda Martinez",
+        plaintext_body="Where are you, where are you, Yolanda?",
+    )
+
+    notifier = Notifier(config=get_config())
+    msg = notifier._construct_email(
+        notification=notification
+    )  # pylint: disable=protected-access
+
+    assert msg is not None
+
+    body = msg.get_body(preferencelist=("html"))
+    assert body is not None
+
+    html_content = body.get_content()
+    assert html_content is not None
+
+    expected = '<!DOCTYPE html><html><head></head><body style="color: #00393f;padding: 12px;"><h2>Dear Yolanda Martinez,</h2><p>Where are you, where are you, Yolanda?</p><p>Warm regards,</p><h3>The GHGA Team</h3></body></html>'
+
+    assert html_content.strip() == expected

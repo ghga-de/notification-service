@@ -48,7 +48,7 @@ async def test_basic_path(joint_fixture: JointFixture):  # noqa: F811
 async def test_email_construction():
     """Verify that the email is getting constructed properly from the template."""
     notification = event_schemas.Notification(
-        recipient_email="test@example.com",  # type: ignore[assignment]
+        recipient_email="test@example.com",
         email_cc=[],
         email_bcc=[],
         subject="Test123",

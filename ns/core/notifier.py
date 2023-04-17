@@ -35,7 +35,9 @@ class Notifier(NotifierPort):
         """Sends notifications based on the channel info provided (e.g. email addresses)"""
         raise NotImplementedError
 
-    def _construct_email(self, *, notification: event_schemas.Notification):
+    def _construct_email(
+        self, *, notification: event_schemas.Notification
+    ) -> EmailMessage:
         """Constructs an EmailMessage object from the contents of an email notification event"""
         message = EmailMessage()
         message["To"] = notification.recipient_email

@@ -45,20 +45,24 @@ class Notifier(NotifierPort):
         message["Bcc"] = notification.email_bcc
         message["Subject"] = notification.subject
 
-        # concatenate recipient name and plaintext body with generic greeting/closing
-        plaintext_email = (
-            f"Dear {notification.recipient_name},\n\n"
-            + f"{notification.plaintext_body}\n\nWarm regards,\n\nThe GHGA Team"
-        )
+        payload_as_dict = notification.dict()
+
+        # create plaintext html with template
+        plaintext_template = Template(self._config.plaintext_email_template)
+        try:
+            plaintext_email = plaintext_template.substitute(payload_as_dict)
+        except KeyError as err:
+            raise self.VariableNotSuppliedError(variable=err.args[0]) from err
+        except ValueError as err:
+            raise self.BadTemplateFormat(problem=err.args[0]) from err
+
         message.set_content(plaintext_email)
 
         # create html version of email, replacing variables of $var format
-        payload_as_dict = notification.dict()
-
-        template = Template(self._config.email_template)
+        html_template = Template(self._config.html_email_template)
 
         try:
-            html_email = template.substitute(payload_as_dict)
+            html_email = html_template.substitute(payload_as_dict)
         except KeyError as err:
             raise self.VariableNotSuppliedError(variable=err.args[0]) from err
         except ValueError as err:

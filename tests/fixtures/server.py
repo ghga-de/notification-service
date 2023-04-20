@@ -135,7 +135,7 @@ class DummyServer:
         """Set the port after init"""
         self._port = port
 
-    def record_email(
+    def _record_email(
         self, *, expected_email: EmailMessage, controller: Controller
     ) -> EmailRecorder:
         """Returns an async context manager with custom controller/handler"""

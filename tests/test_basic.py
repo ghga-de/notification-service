@@ -44,7 +44,10 @@ async def test_basic_path(joint_fixture: JointFixture):  # noqa: F811
     )
 
     event_subscriber = await joint_fixture.container.kafka_event_subscriber()
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(ConnectionRefusedError):
+        # the connection error tells us that the smtp_client tried to connect, which
+        # means that the consumer successfully passed the event through the notifier
+        # and on to the client for emailing.
         await event_subscriber.run(forever=False)
 
 

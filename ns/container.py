@@ -35,7 +35,9 @@ class Container(ContainerBase):
     notifier = get_constructor(Notifier, config=config, smtp_client=smtp_client)
 
     # inbound translators
-    event_sub_translator = get_constructor(EventSubTranslator, config=config)
+    event_sub_translator = get_constructor(
+        EventSubTranslator, config=config, notifier=notifier
+    )
 
     # inbound providers
     kafka_event_subscriber = get_constructor(

@@ -15,6 +15,27 @@
 
 """Utils for Fixture handling"""
 
+from email.message import EmailMessage
 from pathlib import Path
 
+from ghga_event_schemas import pydantic_ as event_schemas
+from ghga_event_schemas.validation import get_validated_payload
+from hexkit.custom_types import JsonObject
+
+from ns.ports.outbound.smtp_client import SmtpClientPort
+
 BASE_DIR = Path(__file__).parent.resolve()
+
+
+def make_notification(payload: JsonObject):
+    return get_validated_payload(payload=payload, schema=event_schemas.Notification)
+
+
+class DummySmtpClient(SmtpClientPort):
+    """Dummy SmtpClient that can be used to grab the exact email message to be sent"""
+
+    def __init__(self):
+        self.expected_email: EmailMessage
+
+    def send_email_message(self, message: EmailMessage):
+        self.expected_email = message

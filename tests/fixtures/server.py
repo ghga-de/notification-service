@@ -73,7 +73,7 @@ def check_emails(received: Envelope, expected: EmailMessage):
     """Compares two emails"""
     assert received is not None
     assert expected is not None
-    message_received = message_from_bytes(received.content)
+    message_received = message_from_bytes(received.content)  # type: ignore
     assert message_received["To"] == expected["To"]
     assert message_received["Cc"] == expected["Cc"]
     assert message_received["From"] == expected["From"]

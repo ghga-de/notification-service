@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
 """Contains a port for the notifier"""
 from abc import ABC, abstractmethod
 
@@ -22,8 +22,24 @@ from ghga_event_schemas import pydantic_ as event_schemas
 class NotifierPort(ABC):
     """Describes a notifier service in basic detail"""
 
+    class InvalidEmailError(RuntimeError):
+        """Raised when there's no valid email for sending with"""
+
+        def __init__(self, *, email: str):
+            message = (
+                f"No valid sender email address configured. '{email}' isn't valid."
+            )
+            super().__init__(message)
+
+    class TemplateConfigNotProvided(RuntimeError):
+        """Raised when the required template is not configured"""
+
+        def __init__(self, *, descriptor: str):
+            message = f"The {descriptor} template is not configured!"
+            super().__init__(message)
+
     class VariableNotSuppliedError(KeyError):
-        """Raised when an html template contains a variable that isn't supplied"""
+        """Raised when a template references a variable that isn't supplied"""
 
         def __init__(self, *, variable: str):
             message = f"Nothing supplied for template variable {variable}"

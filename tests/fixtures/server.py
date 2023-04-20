@@ -119,11 +119,21 @@ class DummyServer:
         self._config = config
         self._login = self._config.login_user
         self._password = self._config.login_password
+        self._host = self._config.smtp_host
+        self._port = self._config.smtp_port
 
     def set_credentials(self, *, login: str, password: str):
         """Change the login and password"""
         self._login = login
         self._password = password
+
+    def set_host(self, host: str):
+        """Set the host name"""
+        self._host = host
+
+    def set_port(self, port: int):
+        """Set the port after init"""
+        self._port = port
 
     def record_email(
         self, *, expected_email: EmailMessage, controller: Controller
@@ -138,8 +148,8 @@ class DummyServer:
         handler = CustomHandler()
         controller = Controller(
             handler,
-            self._config.smtp_host,
-            self._config.smtp_port,
+            self._host,
+            self._port,
             auth_require_tls=False,
             authenticator=Authenticator(self._login, self._password),
         )

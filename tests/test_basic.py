@@ -24,7 +24,7 @@ from ns.core.notifier import Notifier
 from tests.fixtures.config import get_config
 from tests.fixtures.joint import JointFixture, joint_fixture  # noqa: F401
 from tests.fixtures.server import DummyServer
-from tests.fixtures.utils import DummySmtpClient, make_notification
+from tests.fixtures.utils import DummySmtpClient, get_free_port, make_notification
 
 
 @pytest.mark.asyncio
@@ -111,10 +111,15 @@ async def test_transmission(notification_details):
     """Test that the email that the test server gets is what we expect"""
     config = get_config()
     notification = make_notification(notification_details)
+    port_to_use = get_free_port()
 
     dummy_smtp_client = DummySmtpClient()
     smtp_client = SmtpClient(config=config, debugging=True)
+    smtp_client.set_port(port_to_use)
+
     server = DummyServer(config=config)
+    server.set_port(port_to_use)
+
     notifier = Notifier(config=config, smtp_client=dummy_smtp_client)
 
     # send the notification so it gets intercepted by the dummy client

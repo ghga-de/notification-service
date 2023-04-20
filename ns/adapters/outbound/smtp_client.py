@@ -30,11 +30,21 @@ class SmtpClient(SmtpClientPort):
         """Assign config, which should contain all needed info"""
         self._config = config
         self._debugging = debugging
+        self._host = self._config.smtp_host
+        self._port = self._config.smtp_port
+
+    def set_host(self, host: str):
+        """Allow for host change after init"""
+        self._host = host
+
+    def set_port(self, port: int):
+        """Allow for port change after init"""
+        self._port = port
 
     def send_email_message(self, message: EmailMessage):
         # create ssl security context per Python's Security considerations
         context = ssl.create_default_context()
-        with smtplib.SMTP(self._config.smtp_host, self._config.smtp_port) as server:
+        with smtplib.SMTP(self._host, self._port) as server:
             if not self._debugging:
                 server.starttls(context=context)
             try:

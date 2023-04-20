@@ -15,6 +15,7 @@
 
 """Utils for Fixture handling"""
 
+import socket
 from email.message import EmailMessage
 from pathlib import Path
 
@@ -39,3 +40,10 @@ class DummySmtpClient(SmtpClientPort):
 
     def send_email_message(self, message: EmailMessage):
         self.expected_email = message
+
+
+def get_free_port() -> int:
+    """Finds and returns a free port on localhost."""
+    sock = socket.socket()
+    sock.bind(("", 0))
+    return int(sock.getsockname()[1])

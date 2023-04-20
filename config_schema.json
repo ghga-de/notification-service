@@ -65,6 +65,41 @@
         "ns_html_email_template"
       ],
       "type": "string"
+    },
+    "smtp_host": {
+      "title": "Smtp Host",
+      "env_names": [
+        "ns_smtp_host"
+      ],
+      "type": "string"
+    },
+    "smtp_port": {
+      "title": "Smtp Port",
+      "env_names": [
+        "ns_smtp_port"
+      ],
+      "type": "integer"
+    },
+    "login_user": {
+      "title": "Login User",
+      "env_names": [
+        "ns_login_user"
+      ],
+      "type": "string"
+    },
+    "login_password": {
+      "title": "Login Password",
+      "env_names": [
+        "ns_login_password"
+      ],
+      "type": "string"
+    },
+    "from_address": {
+      "title": "From Address",
+      "env_names": [
+        "ns_from_address"
+      ],
+      "type": "string"
     }
   },
   "required": [
@@ -73,7 +108,12 @@
     "service_instance_id",
     "kafka_servers",
     "plaintext_email_template",
-    "html_email_template"
+    "html_email_template",
+    "smtp_host",
+    "smtp_port",
+    "login_user",
+    "login_password",
+    "from_address"
   ],
   "additionalProperties": false
 }

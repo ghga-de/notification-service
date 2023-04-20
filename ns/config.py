@@ -28,6 +28,11 @@ class Config(KafkaConfig, EventSubTranslatorConfig):
     service_name: str = "ns"
     plaintext_email_template: str
     html_email_template: str
+    smtp_host: str
+    smtp_port: int
+    login_user: str
+    login_password: str
+    from_address: str
 
 
 CONFIG = Config()

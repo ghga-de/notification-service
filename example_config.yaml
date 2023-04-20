@@ -20,5 +20,5 @@ plaintext_email_template: 'Dear $recipient_name,
   The GHGA Team'
 service_instance_id: '1'
 service_name: ns
-smtp_host: 127.0.0.1
+smtp_host: 0.0.0.0
 smtp_port: 587

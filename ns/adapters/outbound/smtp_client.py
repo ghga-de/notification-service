@@ -19,14 +19,24 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
-from ns.config import Config
+from pydantic import BaseSettings, Field
+
 from ns.ports.outbound.smtp_client import SmtpClientPort
+
+
+class SmtpClientConfig(BaseSettings):
+    """Configuration details for the SmtpClient"""
+
+    smtp_host: str = Field(..., description="The mail server host to connect to")
+    smtp_port: int = Field(..., description="The port for the mail server connection")
+    login_user: str = Field(..., description="The login username or email")
+    login_password: str = Field(..., description="The login password")
 
 
 class SmtpClient(SmtpClientPort):
     """Concrete implementation of an SmtpClientPort"""
 
-    def __init__(self, config: Config, debugging: bool = False):
+    def __init__(self, config: SmtpClientConfig, debugging: bool = False):
         """Assign config, which should contain all needed info"""
         self._config = config
         self._debugging = debugging

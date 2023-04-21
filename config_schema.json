@@ -3,6 +3,38 @@
   "description": "Modifies the orginal Settings class provided by the user",
   "type": "object",
   "properties": {
+    "smtp_host": {
+      "title": "Smtp Host",
+      "description": "The mail server host to connect to",
+      "env_names": [
+        "ns_smtp_host"
+      ],
+      "type": "string"
+    },
+    "smtp_port": {
+      "title": "Smtp Port",
+      "description": "The port for the mail server connection",
+      "env_names": [
+        "ns_smtp_port"
+      ],
+      "type": "integer"
+    },
+    "login_user": {
+      "title": "Login User",
+      "description": "The login username or email",
+      "env_names": [
+        "ns_login_user"
+      ],
+      "type": "string"
+    },
+    "login_password": {
+      "title": "Login Password",
+      "description": "The login password",
+      "env_names": [
+        "ns_login_password"
+      ],
+      "type": "string"
+    },
     "notification_event_topic": {
       "title": "Notification Event Topic",
       "description": "Name of the event topic used to track notification events",
@@ -66,34 +98,6 @@
       ],
       "type": "string"
     },
-    "smtp_host": {
-      "title": "Smtp Host",
-      "env_names": [
-        "ns_smtp_host"
-      ],
-      "type": "string"
-    },
-    "smtp_port": {
-      "title": "Smtp Port",
-      "env_names": [
-        "ns_smtp_port"
-      ],
-      "type": "integer"
-    },
-    "login_user": {
-      "title": "Login User",
-      "env_names": [
-        "ns_login_user"
-      ],
-      "type": "string"
-    },
-    "login_password": {
-      "title": "Login Password",
-      "env_names": [
-        "ns_login_password"
-      ],
-      "type": "string"
-    },
     "from_address": {
       "title": "From Address",
       "env_names": [
@@ -103,16 +107,16 @@
     }
   },
   "required": [
+    "smtp_host",
+    "smtp_port",
+    "login_user",
+    "login_password",
     "notification_event_topic",
     "notification_event_type",
     "service_instance_id",
     "kafka_servers",
     "plaintext_email_template",
     "html_email_template",
-    "smtp_host",
-    "smtp_port",
-    "login_user",
-    "login_password",
     "from_address"
   ],
   "additionalProperties": false

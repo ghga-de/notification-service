@@ -17,32 +17,32 @@
 from email.message import EmailMessage
 from string import Template
 
-from email_validator import EmailNotValidError, validate_email
 from ghga_event_schemas import pydantic_ as event_schemas
+from pydantic import BaseSettings, EmailStr, Field
 
-from ns.config import Config
 from ns.ports.inbound.notifier import NotifierPort
 from ns.ports.outbound.smtp_client import SmtpClientPort
+
+
+class NotifierConfig(BaseSettings):
+    """Config details for the notifier"""
+
+    plaintext_email_template: str = Field(
+        ..., description="The plaintext template to use for email notifications"
+    )
+    html_email_template: str = Field(
+        ..., description="The HTML template to use for email notifications"
+    )
+    from_address: EmailStr = Field(..., description="The sender's address.")
 
 
 class Notifier(NotifierPort):
     """Implementation of the Notifier Port"""
 
-    def __init__(self, *, config: Config, smtp_client: SmtpClientPort):
+    def __init__(self, *, config: NotifierConfig, smtp_client: SmtpClientPort):
         """Initialize the Notifier with configuration and smtp client"""
         self._config = config
         self._smtp_client = smtp_client
-
-        # validate 'from_address' in email
-        try:
-            validate_email(self._config.from_address)
-        except EmailNotValidError as err:
-            raise self.InvalidEmailError(email=self._config.from_address) from err
-
-        # make sure there's a plaintext template for the emails
-        if not self._config.plaintext_email_template:
-            raise self.TemplateConfigNotProvided(descriptor="plaintext email")
-        self._sender_email = ""
 
     async def send_notification(self, *, notification: event_schemas.Notification):
         """Sends notifications based on the channel info provided (e.g. email addresses)"""

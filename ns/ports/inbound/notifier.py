@@ -22,22 +22,6 @@ from ghga_event_schemas import pydantic_ as event_schemas
 class NotifierPort(ABC):
     """Describes a notifier service in basic detail"""
 
-    class InvalidEmailError(RuntimeError):
-        """Raised when there's no valid email for sending with"""
-
-        def __init__(self, *, email: str):
-            message = (
-                f"No valid sender email address configured. '{email}' isn't valid."
-            )
-            super().__init__(message)
-
-    class TemplateConfigNotProvided(RuntimeError):
-        """Raised when the required template is not configured"""
-
-        def __init__(self, *, descriptor: str):
-            message = f"The {descriptor} template is not configured!"
-            super().__init__(message)
-
     class VariableNotSuppliedError(KeyError):
         """Raised when a template references a variable that isn't supplied"""
 

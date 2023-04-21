@@ -24,7 +24,7 @@ from ns.core.notifier import Notifier
 from tests.fixtures.config import get_config
 from tests.fixtures.joint import JointFixture, joint_fixture  # noqa: F401
 from tests.fixtures.server import DummyServer
-from tests.fixtures.utils import DummySmtpClient, get_free_port, make_notification
+from tests.fixtures.utils import get_free_port, make_notification
 
 sample_notification = {
     "recipient_email": "test@example.com",
@@ -82,21 +82,22 @@ async def test_transmission(notification_details):
     notification = make_notification(notification_details)
     port_to_use = get_free_port()
 
-    dummy_smtp_client = DummySmtpClient()
     smtp_client = SmtpClient(config=config, debugging=True)
     smtp_client.set_port(port_to_use)
 
     server = DummyServer(config=config)
     server.port = port_to_use
 
-    notifier = Notifier(config=config, smtp_client=dummy_smtp_client)
+    notifier = Notifier(config=config, smtp_client=smtp_client)
 
     # send the notification so it gets intercepted by the dummy client
-    await notifier.send_notification(notification=notification)
+    expected_email = notifier._construct_email(
+        notification=notification
+    )  # pylint: disable=protected-access
 
     # tell the smtp client to send the message and compare that with what is received
-    async with server.expect_email(expected_email=dummy_smtp_client.expected_email):
-        smtp_client.send_email_message(dummy_smtp_client.expected_email)
+    async with server.expect_email(expected_email=expected_email):
+        await notifier.send_notification(notification=notification)
         asyncio.get_running_loop().stop()
 
 

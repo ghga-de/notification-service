@@ -35,6 +35,15 @@ class SmtpClientPort(ABC):
             message = "Failed to log in."
             super().__init__(message)
 
+    class GeneralSmtpException(Exception):
+        """Raised by other errors (not failed connection or failed login)"""
+
+        def __init__(self, error_info: str):
+            message = (
+                f"Encountered an issue while attempting to send email: {error_info}"
+            )
+            super().__init__(message)
+
     @abstractmethod
     def send_email_message(self, message: EmailMessage):
         """Sends an email message"""

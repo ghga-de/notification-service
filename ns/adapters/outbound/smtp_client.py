@@ -44,15 +44,19 @@ class SmtpClient(SmtpClientPort):
     def send_email_message(self, message: EmailMessage):
         # create ssl security context per Python's Security considerations
         context = ssl.create_default_context()
-        with smtplib.SMTP(self._config.smtp_host, self._config.smtp_port) as server:
-            if not self._debugging:
-                server.starttls(context=context)
-            try:
-                server.login(self._config.login_user, self._config.login_password)
-            except smtplib.SMTPAuthenticationError as err:
-                raise self.FailedLoginError() from err
 
-            # check for a connection
-            if server.noop()[0] != 250:
-                raise self.ConnectionError()
-            server.send_message(msg=message)
+        try:
+            with smtplib.SMTP(self._config.smtp_host, self._config.smtp_port) as server:
+                if not self._debugging:
+                    server.starttls(context=context)
+                try:
+                    server.login(self._config.login_user, self._config.login_password)
+                except smtplib.SMTPAuthenticationError as err:
+                    raise self.FailedLoginError() from err
+
+                # check for a connection
+                if server.noop()[0] != 250:
+                    raise self.ConnectionError()
+                server.send_message(msg=message)
+        except smtplib.SMTPException as exc:
+            raise self.GeneralSmtpException(error_info=exc.args[0])

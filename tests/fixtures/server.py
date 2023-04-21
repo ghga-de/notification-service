@@ -107,8 +107,6 @@ class DummyServer:
         self._config = config
         self.login = self._config.login_user
         self.password = self._config.login_password
-        self.host = self._config.smtp_host
-        self.port = self._config.smtp_port
 
     def _record_email(
         self, *, expected_email: EmailMessage, controller: Controller
@@ -123,8 +121,8 @@ class DummyServer:
         handler = CustomHandler()
         controller = Controller(
             handler,
-            self.host,
-            self.port,
+            self._config.smtp_host,
+            self._config.smtp_port,
             auth_require_tls=False,
             authenticator=Authenticator(self.login, self.password),
         )
@@ -135,3 +133,5 @@ class DummyServer:
             yield email_recorder
 
         check_emails(received=handler.email_received, expected=expected_email)
+        if controller.loop.is_running():
+            controller.stop()

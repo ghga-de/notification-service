@@ -21,10 +21,10 @@ from hexkit.providers.akafka.testutils import kafka_fixture  # noqa: F401
 
 from ns.adapters.outbound.smtp_client import SmtpClient
 from ns.core.notifier import Notifier
-from tests.fixtures.config import get_config
+from tests.fixtures.config import SMTP_TEST_CONFIG, get_config
 from tests.fixtures.joint import JointFixture, joint_fixture  # noqa: F401
 from tests.fixtures.server import DummyServer
-from tests.fixtures.utils import get_free_port, make_notification
+from tests.fixtures.utils import make_notification
 
 sample_notification = {
     "recipient_email": "test@example.com",
@@ -40,10 +40,9 @@ sample_notification = {
     "notification_details",
     [sample_notification],
 )
-@pytest.mark.asyncio
-async def test_email_construction(notification_details):
+def test_email_construction(notification_details):
     """Verify that the email is getting constructed properly from the template."""
-    config = get_config()
+    config = get_config([SMTP_TEST_CONFIG])
     notification = make_notification(notification_details)
     smtp_client = SmtpClient(config=config)
     notifier = Notifier(config=config, smtp_client=smtp_client)
@@ -77,15 +76,11 @@ async def test_email_construction(notification_details):
 @pytest.mark.asyncio
 async def test_transmission(notification_details):
     """Test that the email that the test server gets is what we expect"""
-    config = get_config()
+    config = get_config([SMTP_TEST_CONFIG])
     notification = make_notification(notification_details)
-    port_to_use = get_free_port()
 
     smtp_client = SmtpClient(config=config, debugging=True)
-    smtp_client.set_port(port_to_use)
-
     server = DummyServer(config=config)
-    server.port = port_to_use
 
     notifier = Notifier(config=config, smtp_client=smtp_client)
 
@@ -103,7 +98,7 @@ async def test_transmission(notification_details):
 @pytest.mark.asyncio
 async def test_failed_authentication():
     """Change login credentials so authentication fails."""
-    config = get_config()
+    config = get_config([SMTP_TEST_CONFIG])
     server = DummyServer(config=config)
     server.login = "bob@bobswebsite.com"
     server.password = "notCorrect"
@@ -122,7 +117,7 @@ async def test_failed_authentication():
 
 
 @pytest.mark.asyncio
-async def test_basic_path(joint_fixture: JointFixture):  # noqa: F811
+async def test_consume_thru_send(joint_fixture: JointFixture):  # noqa: F811
     """Verify that the event is correctly translated into a basic email object"""
     await joint_fixture.kafka.publish_event(
         payload={

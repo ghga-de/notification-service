@@ -70,22 +70,25 @@ class Notifier(NotifierPort):
         except KeyError as err:
             raise self.VariableNotSuppliedError(variable=err.args[0]) from err
         except ValueError as err:
-            raise self.BadTemplateFormat(problem=err.args[0]) from err
+            raise self.BadTemplateFormat(
+                template_type="plaintext", problem=err.args[0]
+            ) from err
 
         message.set_content(plaintext_email)
 
         # create html version of email, replacing variables of $var format
-        if len(self._config.html_email_template) > 0:
-            html_template = Template(self._config.html_email_template)
+        html_template = Template(self._config.html_email_template)
 
-            try:
-                html_email = html_template.substitute(payload_as_dict)
-            except KeyError as err:
-                raise self.VariableNotSuppliedError(variable=err.args[0]) from err
-            except ValueError as err:
-                raise self.BadTemplateFormat(problem=err.args[0]) from err
+        try:
+            html_email = html_template.substitute(payload_as_dict)
+        except KeyError as err:
+            raise self.VariableNotSuppliedError(variable=err.args[0]) from err
+        except ValueError as err:
+            raise self.BadTemplateFormat(
+                template_type="html", problem=err.args[0]
+            ) from err
 
-            # add the html version to the EmailMessage object
-            message.add_alternative(html_email, subtype="html")
+        # add the html version to the EmailMessage object
+        message.add_alternative(html_email, subtype="html")
 
         return message

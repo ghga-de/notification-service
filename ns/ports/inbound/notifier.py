@@ -30,10 +30,10 @@ class NotifierPort(ABC):
             super().__init__(message)
 
     class BadTemplateFormat(ValueError):
-        """Raised when the html template contains improperly formatted content"""
+        """Raised when the template contains improperly formatted content"""
 
-        def __init__(self, *, problem: str):
-            message = f"Problem with HTML template: {problem}"
+        def __init__(self, *, template_type: str, problem: str):
+            message = f"Problem with the {template_type} template: {problem}"
             super().__init__(message)
 
     @abstractmethod

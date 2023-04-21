@@ -60,15 +60,14 @@ async def test_email_construction(notification_details):
     expected_plaintext = "Dear Yolanda Martinez,\n\nWhere are you, where are you, Yolanda?\n\nWarm regards,\n\nThe GHGA Team"
     assert plaintext_content.strip() == expected_plaintext
 
-    if msg.is_multipart():
-        html_body = msg.get_body(preferencelist="html")
-        assert html_body is not None
+    html_body = msg.get_body(preferencelist="html")
+    assert html_body is not None
 
-        html_content = html_body.get_content()  # type: ignore[attr-defined]
-        assert html_content is not None
+    html_content = html_body.get_content()  # type: ignore[attr-defined]
+    assert html_content is not None
 
-        expected_html = '<!DOCTYPE html><html><head></head><body style="color: #00393f;padding: 12px;"><h2>Dear Yolanda Martinez,</h2><p>Where are you, where are you, Yolanda?</p><p>Warm regards,</p><h3>The GHGA Team</h3></body></html>'
-        assert html_content.strip() == expected_html
+    expected_html = '<!DOCTYPE html><html><head></head><body style="color: #00393f;padding: 12px;"><h2>Dear Yolanda Martinez,</h2><p>Where are you, where are you, Yolanda?</p><p>Warm regards,</p><h3>The GHGA Team</h3></body></html>'
+    assert html_content.strip() == expected_html
 
 
 @pytest.mark.parametrize(

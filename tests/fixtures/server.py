@@ -16,7 +16,7 @@
 """Contains a limited test server and testing functionality for local email verification."""
 from contextlib import asynccontextmanager
 from email import message_from_bytes
-from email.message import EmailMessage, Message
+from email.message import EmailMessage
 
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import Sink
@@ -56,23 +56,8 @@ class CustomHandler(Sink):
         return "250 Ok"
 
 
-def compare_payloads(received: Message, expected: EmailMessage):
-    """Compare the corresponding parts for a multipart email"""
-    expected_payload = expected.get_payload()
-    received_payload = received.get_payload()
-    # I don't think we'll have an issue with non-unique content types.
-    # If we do, you could look for something like the content-id as a UID
-    for part in expected_payload:
-        content_type = part.get_content_type()
-        for corresponding in received_payload:
-            if corresponding.get_content_type() == content_type:
-                assert part.as_bytes() == corresponding.as_bytes()
-
-
 def check_emails(received: Envelope, expected: EmailMessage):
     """Compares two emails"""
-    assert received is not None
-    assert expected is not None
     message_received = message_from_bytes(received.content)  # type: ignore
     assert message_received["To"] == expected["To"]
     assert message_received["Cc"] == expected["Cc"]
@@ -83,12 +68,15 @@ def check_emails(received: Envelope, expected: EmailMessage):
         message_received.get_content_disposition() == expected.get_content_disposition()
     )
     assert expected.is_multipart() == message_received.is_multipart()
-    if expected.is_multipart():
-        compare_payloads(received=message_received, expected=expected)
-    else:
-        standardized_expected = expected.get_payload().replace("\r\n", "\n")
-        standardized_received = message_received.get_payload().replace("\r\n", "\n")
-        assert standardized_expected == standardized_received
+    expected_payload = expected.get_payload()
+    received_payload = message_received.get_payload()
+    # I don't think we'll have an issue with non-unique content types.
+    # If we do, you could look for something like the content-id as a UID
+    for part in expected_payload:
+        content_type = part.get_content_type()
+        for corresponding in received_payload:
+            if corresponding.get_content_type() == content_type:
+                assert part.as_bytes() == corresponding.as_bytes()
 
 
 class EmailRecorder:

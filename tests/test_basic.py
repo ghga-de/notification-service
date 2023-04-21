@@ -26,31 +26,30 @@ from tests.fixtures.joint import JointFixture, joint_fixture  # noqa: F401
 from tests.fixtures.server import DummyServer
 from tests.fixtures.utils import DummySmtpClient, get_free_port, make_notification
 
+sample_notification = {
+    "recipient_email": "test@example.com",
+    "email_cc": ["test2@test.com", "test3@test.com"],
+    "email_bcc": ["test4@test.com", "test5@test.com"],
+    "subject": "Test123",
+    "recipient_name": "Yolanda Martinez",
+    "plaintext_body": "Where are you, where are you, Yolanda?",
+}
+
 
 @pytest.mark.parametrize(
     "notification_details",
-    [
-        {
-            "recipient_email": "test@example.com",
-            "email_cc": ["test2@test.com", "test3@test.com"],
-            "email_bcc": ["test4@test.com", "test5@test.com"],
-            "subject": "Test123",
-            "recipient_name": "Yolanda Martinez",
-            "plaintext_body": "Where are you, where are you, Yolanda?",
-        }
-    ],
+    [sample_notification],
 )
 @pytest.mark.asyncio
 async def test_email_construction(notification_details):
     """Verify that the email is getting constructed properly from the template."""
     config = get_config()
     notification = make_notification(notification_details)
-
-    dummy_smtp_client = DummySmtpClient()
-    notifier = Notifier(config=config, smtp_client=dummy_smtp_client)
-    await notifier.send_notification(notification=notification)
-
-    msg = dummy_smtp_client.expected_email
+    smtp_client = SmtpClient(config=config)
+    notifier = Notifier(config=config, smtp_client=smtp_client)
+    msg = notifier._construct_email(
+        notification=notification
+    )  # pylint: disable=protected-access
 
     assert msg is not None
 
@@ -74,16 +73,7 @@ async def test_email_construction(notification_details):
 
 @pytest.mark.parametrize(
     "notification_details",
-    [
-        {
-            "recipient_email": "test@example.com",
-            "email_cc": ["test2@test.com", "test3@test.com"],
-            "email_bcc": ["test4@test.com", "test5@test.com"],
-            "subject": "Test123",
-            "recipient_name": "Yolanda Martinez",
-            "plaintext_body": "Where are you, where are you, Yolanda?",
-        }
-    ],
+    [sample_notification],
 )
 @pytest.mark.asyncio
 async def test_transmission(notification_details):
@@ -109,12 +99,25 @@ async def test_transmission(notification_details):
         smtp_client.send_email_message(dummy_smtp_client.expected_email)
         asyncio.get_running_loop().stop()
 
-    # change login credentials so authentication fails
+
+@pytest.mark.asyncio
+async def test_failed_authentication():
+    """Change login credentials so authentication fails."""
+    config = get_config()
+    server = DummyServer(config=config)
     server.login = "bob@bobswebsite.com"
     server.password = "notCorrect"
+    notification = make_notification(sample_notification)
+    smtp_client = SmtpClient(config=config, debugging=True)
+    notifier = Notifier(config=config, smtp_client=smtp_client)
+    expected_email = notifier._construct_email(
+        notification=notification
+    )  # pylint: disable=protected-access
+
+    # send the notification so it gets intercepted by the dummy client
     with pytest.raises(SmtpClient.FailedLoginError):
-        async with server.expect_email(expected_email=dummy_smtp_client.expected_email):
-            smtp_client.send_email_message(dummy_smtp_client.expected_email)
+        async with server.expect_email(expected_email=expected_email):
+            await notifier.send_notification(notification=notification)
             asyncio.get_running_loop().stop()
 
 

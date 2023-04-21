@@ -117,23 +117,10 @@ class DummyServer:
     def __init__(self, *, config: Config):
         """assign config"""
         self._config = config
-        self._login = self._config.login_user
-        self._password = self._config.login_password
-        self._host = self._config.smtp_host
-        self._port = self._config.smtp_port
-
-    def set_credentials(self, *, login: str, password: str):
-        """Change the login and password"""
-        self._login = login
-        self._password = password
-
-    def set_host(self, host: str):
-        """Set the host name"""
-        self._host = host
-
-    def set_port(self, port: int):
-        """Set the port after init"""
-        self._port = port
+        self.login = self._config.login_user
+        self.password = self._config.login_password
+        self.host = self._config.smtp_host
+        self.port = self._config.smtp_port
 
     def _record_email(
         self, *, expected_email: EmailMessage, controller: Controller
@@ -148,13 +135,13 @@ class DummyServer:
         handler = CustomHandler()
         controller = Controller(
             handler,
-            self._host,
-            self._port,
+            self.host,
+            self.port,
             auth_require_tls=False,
-            authenticator=Authenticator(self._login, self._password),
+            authenticator=Authenticator(self.login, self.password),
         )
 
-        async with self.record_email(
+        async with self._record_email(
             expected_email=expected_email, controller=controller
         ) as email_recorder:
             yield email_recorder

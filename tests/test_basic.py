@@ -121,7 +121,7 @@ async def test_transmission(notification_details):
     smtp_client.set_port(port_to_use)
 
     server = DummyServer(config=config)
-    server.set_port(port_to_use)
+    server.port = port_to_use
 
     notifier = Notifier(config=config, smtp_client=dummy_smtp_client)
 
@@ -134,7 +134,8 @@ async def test_transmission(notification_details):
         asyncio.get_running_loop().stop()
 
     # change login credentials so authentication fails
-    server.set_credentials(login="bob@bobswebsite.com", password="notCorrect")
+    server.login = "bob@bobswebsite.com"
+    server.password = "notCorrect"
     with pytest.raises(SmtpClient.FailedLoginError):
         async with server.expect_email(expected_email=dummy_smtp_client.expected_email):
             smtp_client.send_email_message(dummy_smtp_client.expected_email)

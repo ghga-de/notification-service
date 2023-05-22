@@ -8,31 +8,10 @@ The Notification Service (NS) handles notification kafka events.
 
 ## Description
 
-<!-- Please provide a short overview of the features of this service.-->
+The Notification Service is a microservice intended to provide general notification capabilities. At this time, notifications are only generated via Kafka events, and they are only issued via email.
+However, the architecture of the service would allow for the addition of other event sourcing options, like API submission, as well as new notification channels, such as SMS, with relatively little work.
 
-This repo is a template for creating a new microservice.
-
-The directories, files, and their structure herein are recommendations
-from the GHGA Dev Team.
-
-### Naming Conventions
-The github repository contains only lowercase letters, numbers, and hyphens "-",
-e.g.: `my-microservice`
-
-The python package (and thus the source repository) contains underscores "_"
-instead of hyphens, e.g.: `my_microservice`
-However, an abbreviated version is prefered as package name.
-
-### Adapt to your service
-This is just a template and needs some adaption to your specific use case.
-
-Please search for **"please adapt"** comments. They will indicate all locations
-that need modification. Once the adaptions are in place, please remove these #
-comments.
-
-Finally, follow the instructions to generate the README.md described in
-[`./readme_generation.md`](./readme_generation.md). Please also adapt this markdown file
-by providing an overview of the feature of the package.
+To send an email notification using this service, publish a kafka event conforming to the Notification event schema to the 'notifications' topic. Because email client authentication is handled by the notification service itself, nothing beyond publishing the event is required.
 
 
 ## Installation
@@ -125,13 +104,21 @@ of the pydantic documentation.
 An OpenAPI specification for this service can be found [here](./openapi.yaml).
 
 ## Architecture and Design:
-<!-- Please provide an overview of the architecture and design of the code base.
-Mention anything that deviates from the standard triple hexagonal architecture and
-the corresponding structure. -->
-
 This is a Python-based service following the Triple Hexagonal Architecture pattern.
 It uses protocol/provider pairs and dependency injection mechanisms provided by the
 [hexkit](https://github.com/ghga-de/hexkit) library.
+
+### Typical operation
+
+This service doesn't have a REST API or use a database for anything.
+It's a straightforward service running a Kafka consumer that listens for one kind of event.
+Notification events are picked up by the consumer, validated against the Notification event schema, and sent to the Notifier module.
+The Notifier looks at the notification event details and determines what to do with it.
+Right now, this always means sending an email.
+The information is sent to the SMTP client, where a secure connection is established and the email is dispatched.
+
+### Testing
+The only notable thing about the test setup is that it uses a local test server (tests/fixtures/server.py) via aiosmtpd, which has sort of replaced the old smtpd module. There is a DummyServer, which has an 'expect_email()' method that is used similarly to the expect_events() method from hexkit's kafka testing module. It can perform simple a authentication check so error handling can be tested. When an email is sent to the test server, the connection is closed and the received/expected emails are compared to make sure that the header and body content is intact. This enables testing the flow of sending an email without actually issuing any real emails and without using real credentials.
 
 
 ## Development

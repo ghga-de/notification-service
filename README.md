@@ -1,42 +1,60 @@
 
-![tests](https://github.com/ghga-de/notification-service/actions/workflows/unit_and_int_tests.yaml/badge.svg)
+[![tests](https://github.com/ghga-de/notification-service/actions/workflows/unit_and_int_tests.yaml/badge.svg)](https://github.com/ghga-de/notification-service/actions/workflows/unit_and_int_tests.yaml)
 [![Coverage Status](https://coveralls.io/repos/github/ghga-de/notification-service/badge.svg?branch=main)](https://coveralls.io/github/ghga-de/notification-service?branch=main)
-# Notification-Service
 
-This service is used to handle notifications, especially email notifications.
-Other microservices in the ecosystem can publish the appropriate notification event and
-this service will process it accordingly. The primary use is to send emails based on
-notification event content. For instance, a service might want to notify a user that
-their upload was successful. The service in question could publish an event with that
-information, and the notification service would take care of the rest.
+# Notification Service
 
-## Documentation:
+The Notification Service (NS) handles notification kafka events.
 
-An extensive documentation can be found [here](...) (coming soon).
+## Description
 
-## Quick Start
-### Installation
+<!-- Please provide a short overview of the features of this service.-->
+
+This repo is a template for creating a new microservice.
+
+The directories, files, and their structure herein are recommendations
+from the GHGA Dev Team.
+
+### Naming Conventions
+The github repository contains only lowercase letters, numbers, and hyphens "-",
+e.g.: `my-microservice`
+
+The python package (and thus the source repository) contains underscores "_"
+instead of hyphens, e.g.: `my_microservice`
+However, an abbreviated version is prefered as package name.
+
+### Adapt to your service
+This is just a template and needs some adaption to your specific use case.
+
+Please search for **"please adapt"** comments. They will indicate all locations
+that need modification. Once the adaptions are in place, please remove these #
+comments.
+
+Finally, follow the instructions to generate the README.md described in
+[`./readme_generation.md`](./readme_generation.md). Please also adapt this markdown file
+by providing an overview of the feature of the package.
+
+
+## Installation
 We recommend using the provided Docker container.
 
 A pre-build version is available at [docker hub](https://hub.docker.com/repository/docker/ghga/notification-service):
 ```bash
-# Please feel free to choose the version as needed:
-docker pull ghga/notification-service:<version>
+docker pull ghga/notification-service:0.1.0
 ```
 
 Or you can build the container yourself from the [`./Dockerfile`](./Dockerfile):
 ```bash
 # Execute in the repo's root dir:
-# (Please feel free to adapt the name/tag.)
-docker build -t ghga/notification-service:<version> .
+docker build -t ghga/notification-service:0.1.0 .
 ```
 
 For production-ready deployment, we recommend using Kubernetes, however,
 for simple use cases, you could execute the service using docker
 on a single server:
 ```bash
-# The entrypoint is pre-configured:
-docker run -p 8080:8080 ghga/notification-service:<version>
+# The entrypoint is preconfigured:
+docker run -p 8080:8080 ghga/notification-service:0.1.0 --help
 ```
 
 If you prefer not to use containers, you may install the service from source:
@@ -44,17 +62,48 @@ If you prefer not to use containers, you may install the service from source:
 # Execute in the repo's root dir:
 pip install .
 
-# to run the service:
-ns
+# To run the service:
+ns --help
 ```
 
-### Configuration:
-The [`./example-config.yaml`](./example-config.yaml) gives an overview of the available configuration options.
-Please adapt it and choose one of the following options for injecting it into the service:
-- specify the path to via the `NS_CONFIG_YAML` env variable
-- rename it to `.ns.yaml` and place it into one of the following locations:
-  - the current working directory were you are execute the service (on unix: `./.ns.yaml`)
-  - your home directory (on unix: `~/.ns.yaml`)
+## Configuration
+### Parameters
+
+The service requires the following configuration parameters:
+- **`plaintext_email_template`** *(string)*: The plaintext template to use for email notifications.
+
+- **`html_email_template`** *(string)*: The HTML template to use for email notifications.
+
+- **`from_address`** *(string)*: The sender's address.
+
+- **`smtp_host`** *(string)*: The mail server host to connect to.
+
+- **`smtp_port`** *(integer)*: The port for the mail server connection.
+
+- **`login_user`** *(string)*: The login username or email.
+
+- **`login_password`** *(string)*: The login password.
+
+- **`notification_event_topic`** *(string)*: Name of the event topic used to track notification events.
+
+- **`notification_event_type`** *(string)*: The type to use for events containing content to be sent.
+
+- **`service_name`** *(string)*: Default: `ns`.
+
+- **`service_instance_id`** *(string)*: A string that uniquely identifies this instance across all instances of this service. A globally unique Kafka client ID will be created by concatenating the service_name and the service_instance_id.
+
+- **`kafka_servers`** *(array)*: A list of connection strings to connect to Kafka bootstrap servers.
+
+  - **Items** *(string)*
+
+
+### Usage:
+
+A template YAML for configurating the service can be found at
+[`./example-config.yaml`](./example-config.yaml).
+Please adapt it, rename it to `.ns.yaml`, and place it into one of the following locations:
+- in the current working directory were you are execute the service (on unix: `./.ns.yaml`)
+- in your home directory (on unix: `~/.ns.yaml`)
 
 The config yaml will be automatically parsed by the service.
 
@@ -63,8 +112,8 @@ The config yaml will be automatically parsed by the service.
 All parameters mentioned in the [`./example-config.yaml`](./example-config.yaml)
 could also be set using environment variables or file secrets.
 
-For naming the environment variables, just prefix the parameter name with `NS_`,
-e.g. for the `host` set an environment variable named `NS_HOST`
+For naming the environment variables, just prefix the parameter name with `ns_`,
+e.g. for the `host` set an environment variable named `ns_host`
 (you may use both upper or lower cases, however, it is standard to define all env
 variables in upper cases).
 
@@ -72,45 +121,47 @@ To using file secrets please refer to the
 [corresponding section](https://pydantic-docs.helpmanual.io/usage/settings/#secret-support)
 of the pydantic documentation.
 
+## HTTP API
+An OpenAPI specification for this service can be found [here](./openapi.yaml).
+
+## Architecture and Design:
+<!-- Please provide an overview of the architecture and design of the code base.
+Mention anything that deviates from the standard triple hexagonal architecture and
+the corresponding structure. -->
+
+This is a Python-based service following the Triple Hexagonal Architecture pattern.
+It uses protocol/provider pairs and dependency injection mechanisms provided by the
+[hexkit](https://github.com/ghga-de/hexkit) library.
+
 
 ## Development
 For setting up the development environment, we rely on the
 [devcontainer feature](https://code.visualstudio.com/docs/remote/containers) of vscode
 in combination with Docker Compose.
 
-To use it, you have to have Docker Compose as well as vscode with its "Remote - Containers" extension (`ms-vscode-remote.remote-containers`) installed.
+To use it, you have to have Docker Compose as well as vscode with its "Remote - Containers"
+extension (`ms-vscode-remote.remote-containers`) installed.
 Then open this repository in vscode and run the command
 `Remote-Containers: Reopen in Container` from the vscode "Command Palette".
 
 This will give you a full-fledged, pre-configured development environment including:
 - infrastructural dependencies of the service (databases, etc.)
 - all relevant vscode extensions pre-installed
-- pre-configured linting and auto-formatting
+- pre-configured linting and auto-formating
 - a pre-configured debugger
 - automatic license-header insertion
 
-Moreover, inside the devcontainer, there are two convenience commands available
-(please type them in the integrated terminal of vscode):
-- `dev_install` - install the service with all development dependencies,
-installs pre-commit, and applies any migration scripts to the test database
-(please run that if you are starting the devcontainer for the first time
-or if you added any python dependencies to the [`./setup.cfg`](./setup.cfg))
-- `dev_launcher` - starts the service with the development config yaml
-(located in the `./.devcontainer/` dir)
+Moreover, inside the devcontainer, a convenience commands `dev_install` is available.
+It installs the service with all development dependencies, installs pre-commit.
 
-If you prefer not to use vscode, you could get a similar setup (without the editor specific features)
-by running the following commands:
-``` bash
-# Execute in the repo's root dir:
-cd ./.devcontainer
-
-# build and run the environment with docker-compose
-docker-compose up
-
-# attach to the main container:
-# (you can open multiple shell sessions like this)
-docker exec -it devcontainer_app_1 /bin/bash
-```
+The installation is performed automatically when you build the devcontainer. However,
+if you update dependencies in the [`./setup.cfg`](./setup.cfg) or the
+[`./requirements-dev.txt`](./requirements-dev.txt), please run it again.
 
 ## License
-This repository is free to use and modify according to the [Apache 2.0 License](./LICENSE).
+This repository is free to use and modify according to the
+[Apache 2.0 License](./LICENSE).
+
+## Readme Generation
+This readme is autogenerate, please see [`readme_generation.md`](./readme_generation.md)
+for details.

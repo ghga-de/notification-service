@@ -44,12 +44,11 @@ class SmtpClient(SmtpClientPort):
         self._config = config
 
     def send_email_message(self, message: EmailMessage):
-        # create ssl security context per Python's Security considerations
-        context = ssl.create_default_context()
-
         try:
             with smtplib.SMTP(self._config.smtp_host, self._config.smtp_port) as server:
                 if self._config.use_starttls:
+                    # create ssl security context per Python's Security considerations
+                    context = ssl.create_default_context()
                     server.starttls(context=context)
                 try:
                     server.login(self._config.login_user, self._config.login_password)

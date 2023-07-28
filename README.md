@@ -77,6 +77,8 @@ The service requires the following configuration parameters:
 
 - **`login_password`** *(string)*: The login password.
 
+- **`use_starttls`** *(boolean)*: Boolean flag indicating the use of STARTTLS. Default: `True`.
+
 - **`notification_event_topic`** *(string)*: Name of the event topic used to track notification events.
 
 - **`notification_event_type`** *(string)*: The type to use for events containing content to be sent.

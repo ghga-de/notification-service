@@ -12,7 +12,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+"""Top-level DI Container and consumer creation, entry point is consume_events()"""
 
-"""The Notification Service (NS) handles notification kafka events. """
+from ns.config import Config
+from ns.container import Container
 
-__version__ = "0.1.2"
+
+def get_configured_container(*, config: Config) -> Container:
+    """Create and configure a DI container."""
+    container = Container()
+    container.config.load_config(config)
+
+    return container
+
+
+async def consume_events(run_forever: bool = True):
+    """Start consuming events with kafka"""
+    config = Config()
+
+    async with get_configured_container(config=config) as container:
+        event_consumer = await container.kafka_event_subscriber()
+        await event_consumer.run(forever=run_forever)

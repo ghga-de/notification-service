@@ -29,7 +29,7 @@ def get_configured_container(*, config: Config) -> Container:
 
 async def consume_events(run_forever: bool = True):
     """Start consuming events with kafka"""
-    config = Config()
+    config = Config()  # type: ignore [call-arg]
 
     async with get_configured_container(config=config) as container:
         event_consumer = await container.kafka_event_subscriber()

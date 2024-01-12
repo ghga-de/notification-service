@@ -10,7 +10,9 @@ kafka_ssl_cafile: ''
 kafka_ssl_certfile: ''
 kafka_ssl_keyfile: ''
 kafka_ssl_password: ''
-login_password: test
+log_format: null
+log_level: INFO
+login_password: '**********'
 login_user: test@test.com
 notification_event_topic: notifications
 notification_event_type: notification

@@ -1,4 +1,3 @@
-
 [![tests](https://github.com/ghga-de/notification-service/actions/workflows/tests.yaml/badge.svg)](https://github.com/ghga-de/notification-service/actions/workflows/tests.yaml)
 [![Coverage Status](https://coveralls.io/repos/github/ghga-de/notification-service/badge.svg?branch=main)](https://coveralls.io/github/ghga-de/notification-service?branch=main)
 
@@ -27,20 +26,19 @@ The information is sent to the SMTP client, where a secure connection is establi
 
 In the configuration there are two template requirements: a plaintext email template and an HTML email template. The point of these is to produce consistently formatted emails while keeping the requirements light for microservices trying to send notifications. The templates are both used to make the email. Template variables are denoted with "$", e.g. $recipient_name, and are required to match the notification schema field names defined [here](https://github.com/ghga-de/ghga-event-schemas/blob/8e535ac271e7f27b6132505aad8cf572decc7ab4/ghga_event_schemas/pydantic_.py#L304). Having both HTML and plaintext means everyone should be able to receive the emails without a problem, and most of the time they should look nice. Because email clients like Outlook, Gmail, etc. have differences in the way they render HTML emails, it is recommended that styling be kept to a minimum or to use a pre-made template where these things have been taken into account.
 
-
 ## Installation
 
 We recommend using the provided Docker container.
 
 A pre-build version is available at [docker hub](https://hub.docker.com/repository/docker/ghga/notification-service):
 ```bash
-docker pull ghga/notification-service:1.0.0
+docker pull ghga/notification-service:1.1.0
 ```
 
 Or you can build the container yourself from the [`./Dockerfile`](./Dockerfile):
 ```bash
 # Execute in the repo's root dir:
-docker build -t ghga/notification-service:1.0.0 .
+docker build -t ghga/notification-service:1.1.0 .
 ```
 
 For production-ready deployment, we recommend using Kubernetes, however,
@@ -48,7 +46,7 @@ for simple use cases, you could execute the service using docker
 on a single server:
 ```bash
 # The entrypoint is preconfigured:
-docker run -p 8080:8080 ghga/notification-service:1.0.0 --help
+docker run -p 8080:8080 ghga/notification-service:1.1.0 --help
 ```
 
 If you prefer not to use containers, you may install the service from source:
@@ -129,13 +127,28 @@ The service requires the following configuration parameters:
 
 - **`kafka_security_protocol`** *(string)*: Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL. Must be one of: `["PLAINTEXT", "SSL"]`. Default: `"PLAINTEXT"`.
 
-- **`kafka_ssl_cafile`** *(string)*: Certificate Authority file path containing certificates used to sign broker certificates. If a CA not specified, the default system CA will be used if found by OpenSSL. Default: `""`.
+- **`kafka_ssl_cafile`** *(string)*: Certificate Authority file path containing certificates used to sign broker certificates. If a CA is not specified, the default system CA will be used if found by OpenSSL. Default: `""`.
 
 - **`kafka_ssl_certfile`** *(string)*: Optional filename of client certificate, as well as any CA certificates needed to establish the certificate's authenticity. Default: `""`.
 
 - **`kafka_ssl_keyfile`** *(string)*: Optional filename containing the client private key. Default: `""`.
 
 - **`kafka_ssl_password`** *(string)*: Optional password to be used for the client private key. Default: `""`.
+
+- **`generate_correlation_id`** *(boolean)*: A flag, which, if False, will result in an error when trying to publish an event without a valid correlation ID set for the context. If True, the a newly correlation ID will be generated and used in the event header. Default: `true`.
+
+
+  Examples:
+
+  ```json
+  true
+  ```
+
+
+  ```json
+  false
+  ```
+
 
 
 ### Usage:
@@ -173,7 +186,6 @@ It uses protocol/provider pairs and dependency injection mechanisms provided by 
 
 ### Testing
 The only notable thing about the test setup is that it uses a local test server (tests/fixtures/server.py) via [aiosmtpd](https://aiosmtpd.readthedocs.io/en/latest/), which has sort of replaced the old smtpd module. There is a DummyServer, which has an 'expect_email()' method that is used similarly to the [expect_events()](https://github.com/ghga-de/hexkit/blob/7382c19b84136ea5b1652087ba1da4890267b1b5/hexkit/providers/akafka/testutils.py#L368) method from hexkit's kafka testing module. It can perform simple a authentication check so error handling can be tested. When an email is sent to the test server, the connection is closed and the received/expected emails are compared to make sure that the header and body content is intact. This enables testing the flow of sending an email without actually issuing any real emails and without using real credentials.
-
 
 ## Development
 

@@ -4,4 +4,5 @@
 -r requirements-dev-template.in
 
 # additional requirements can be listed here
-testcontainers[kafka,mongo]>=3.4.1
+testcontainers[kafka]>=3.4.1
+aiosmtpd>=1.4.4.post2

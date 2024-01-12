@@ -19,7 +19,7 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings
 
 from ns.ports.outbound.smtp_client import SmtpClientPort
@@ -31,7 +31,7 @@ class SmtpClientConfig(BaseSettings):
     smtp_host: str = Field(..., description="The mail server host to connect to")
     smtp_port: int = Field(..., description="The port for the mail server connection")
     login_user: str = Field(..., description="The login username or email")
-    login_password: str = Field(..., description="The login password")
+    login_password: SecretStr = Field(..., description="The login password")
     use_starttls: bool = Field(
         default=True, description="Boolean flag indicating the use of STARTTLS"
     )
@@ -57,7 +57,10 @@ class SmtpClient(SmtpClientPort):
                     context = ssl.create_default_context()
                     server.starttls(context=context)
                 try:
-                    server.login(self._config.login_user, self._config.login_password)
+                    server.login(
+                        self._config.login_user,
+                        self._config.login_password.get_secret_value(),
+                    )
                 except smtplib.SMTPAuthenticationError as err:
                     raise self.FailedLoginError() from err
 

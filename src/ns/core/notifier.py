@@ -54,7 +54,13 @@ class Notifier(NotifierPort):
             try:
                 message = self._construct_email(notification=notification)
                 self._smtp_client.send_email_message(message)
-            except (self.BadTemplateFormat, SmtpClientPort.GeneralSmtpException) as err:
+            except (
+                self.BadTemplateFormat,
+                self.VariableNotSuppliedError,
+                SmtpClientPort.GeneralSmtpException,
+                SmtpClientPort.FailedLoginError,
+                SmtpClientPort.ConnectionError,
+            ) as err:
                 log.fatal(msg=str(err))
                 raise
 

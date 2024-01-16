@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 """Contains the concrete implementation of a NotifierPort"""
+import logging
 from email.message import EmailMessage
 from string import Template
 
@@ -23,6 +24,8 @@ from pydantic_settings import BaseSettings
 
 from ns.ports.inbound.notifier import NotifierPort
 from ns.ports.outbound.smtp_client import SmtpClientPort
+
+log = logging.getLogger(__name__)
 
 
 class NotifierConfig(BaseSettings):
@@ -48,8 +51,12 @@ class Notifier(NotifierPort):
     async def send_notification(self, *, notification: event_schemas.Notification):
         """Sends notifications based on the channel info provided (e.g. email addresses)"""
         if len(notification.recipient_email) > 0:
-            message = self._construct_email(notification=notification)
-            self._smtp_client.send_email_message(message)
+            try:
+                message = self._construct_email(notification=notification)
+                self._smtp_client.send_email_message(message)
+            except (self.BadTemplateFormat, SmtpClientPort.GeneralSmtpException) as err:
+                log.fatal(msg=str(err))
+                raise
 
     def _construct_email(
         self, *, notification: event_schemas.Notification

@@ -51,18 +51,8 @@ class Notifier(NotifierPort):
     async def send_notification(self, *, notification: event_schemas.Notification):
         """Sends notifications based on the channel info provided (e.g. email addresses)"""
         if len(notification.recipient_email) > 0:
-            try:
-                message = self._construct_email(notification=notification)
-                self._smtp_client.send_email_message(message)
-            except (
-                self.BadTemplateFormat,
-                self.VariableNotSuppliedError,
-                SmtpClientPort.GeneralSmtpException,
-                SmtpClientPort.FailedLoginError,
-                SmtpClientPort.ConnectionError,
-            ) as err:
-                log.fatal(msg=str(err))
-                raise
+            message = self._construct_email(notification=notification)
+            self._smtp_client.send_email_message(message)
 
     def _construct_email(
         self, *, notification: event_schemas.Notification
@@ -82,11 +72,18 @@ class Notifier(NotifierPort):
         try:
             plaintext_email = plaintext_template.substitute(payload_as_dict)
         except KeyError as err:
-            raise self.VariableNotSuppliedError(variable=err.args[0]) from err
+            template_var_error = self.VariableNotSuppliedError(variable=err.args[0])
+            log.critical(template_var_error, extra={"variable": err.args[0]})
+            raise template_var_error from err
         except ValueError as err:
-            raise self.BadTemplateFormat(
+            template_format_error = self.BadTemplateFormat(
                 template_type="plaintext", problem=err.args[0]
-            ) from err
+            )
+            log.critical(
+                template_format_error,
+                extra={"template_type": "plaintext", "problem": err.args[0]},
+            )
+            raise template_format_error from err
 
         message.set_content(plaintext_email)
 
@@ -96,11 +93,18 @@ class Notifier(NotifierPort):
         try:
             html_email = html_template.substitute(payload_as_dict)
         except KeyError as err:
-            raise self.VariableNotSuppliedError(variable=err.args[0]) from err
+            template_var_error = self.VariableNotSuppliedError(variable=err.args[0])
+            log.critical(template_var_error, extra={"variable": err.args[0]})
+            raise template_var_error from err
         except ValueError as err:
-            raise self.BadTemplateFormat(
+            template_format_error = self.BadTemplateFormat(
                 template_type="html", problem=err.args[0]
-            ) from err
+            )
+            log.critical(
+                template_format_error,
+                extra={"template_type": "html", "problem": err.args[0]},
+            )
+            raise template_format_error from err
 
         # add the html version to the EmailMessage object
         message.add_alternative(html_email, subtype="html")

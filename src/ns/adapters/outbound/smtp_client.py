@@ -15,6 +15,7 @@
 #
 
 """Contains the smtp client adapter"""
+import logging
 import smtplib
 import ssl
 from email.message import EmailMessage
@@ -23,6 +24,8 @@ from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings
 
 from ns.ports.outbound.smtp_client import SmtpClientPort
+
+log = logging.getLogger(__name__)
 
 
 class SmtpClientConfig(BaseSettings):
@@ -62,11 +65,18 @@ class SmtpClient(SmtpClientPort):
                         self._config.login_password.get_secret_value(),
                     )
                 except smtplib.SMTPAuthenticationError as err:
-                    raise self.FailedLoginError() from err
+                    login_error = self.FailedLoginError()
+                    log.critical(login_error)
+                    raise login_error from err
 
                 # check for a connection
                 if server.noop()[0] != 250:
-                    raise self.ConnectionError()
+                    connection_error = self.ConnectionError()
+                    log.critical(connection_error)
+                    raise connection_error
+
                 server.send_message(msg=message)
         except smtplib.SMTPException as exc:
-            raise self.GeneralSmtpException(error_info=exc.args[0]) from exc
+            error = self.GeneralSmtpException(error_info=exc.args[0])
+            log.error(error, extra={"error_info": exc.args[0]})
+            raise error from exc

@@ -14,15 +14,16 @@
 # limitations under the License.
 
 """Test basic event consumption"""
-import asyncio
-
 import pytest
-from hexkit.providers.akafka.testutils import kafka_fixture  # noqa: F401
 
 from ns.adapters.outbound.smtp_client import SmtpClient
-from ns.core.notifier import Notifier
+from tests.conftest import (
+    joint_fixture,  # noqa: F401
+    kafka_fixture,  # noqa: F401
+    mongodb_fixture,  # noqa: F401
+)
 from tests.fixtures.config import SMTP_TEST_CONFIG, get_config
-from tests.fixtures.joint import JointFixture, joint_fixture  # noqa: F401
+from tests.fixtures.joint import JointFixture
 from tests.fixtures.server import DummyServer
 from tests.fixtures.utils import make_notification
 
@@ -40,30 +41,40 @@ sample_notification = {
     "notification_details",
     [sample_notification],
 )
-def test_email_construction(notification_details):
+@pytest.mark.asyncio(scope="session")
+async def test_email_construction(
+    joint_fixture: JointFixture,  # noqa: F811
+    notification_details,
+):
     """Verify that the email is getting constructed properly from the template."""
-    config = get_config([SMTP_TEST_CONFIG])
     notification = make_notification(notification_details)
-    smtp_client = SmtpClient(config=config)
-    notifier = Notifier(config=config, smtp_client=smtp_client)
-    msg = notifier._construct_email(notification=notification)
+
+    msg = joint_fixture.notifier._construct_email(notification=notification)  # type: ignore
 
     assert msg is not None
 
     plaintext_body = msg.get_body(preferencelist="plain")
     assert plaintext_body is not None
 
-    plaintext_content = plaintext_body.get_content()  # type: ignore[attr-defined]
-    expected_plaintext = "Dear Yolanda Martinez,\n\nWhere are you, where are you, Yolanda?\n\nWarm regards,\n\nThe GHGA Team"
+    plaintext_content = plaintext_body.get_content()
+    expected_plaintext = (
+        "Dear Yolanda Martinez,\n\nWhere are you, where are you, Yolanda?\n"
+        + "\nWarm regards,\n\nThe GHGA Team"
+    )
     assert plaintext_content.strip() == expected_plaintext
 
     html_body = msg.get_body(preferencelist="html")
     assert html_body is not None
 
-    html_content = html_body.get_content()  # type: ignore[attr-defined]
+    html_content = html_body.get_content()
     assert html_content is not None
 
-    expected_html = '<!DOCTYPE html><html><head></head><body style="color: #00393f;padding: 12px;"><h2>Dear Yolanda Martinez,</h2><p>Where are you, where are you, Yolanda?</p><p>Warm regards,</p><h3>The GHGA Team</h3></body></html>'
+    expected_html = (
+        '<!DOCTYPE html><html><head></head><body style="color: #00393f;'
+        + 'padding: 12px;"><h2>Dear Yolanda Martinez,</h2><p>Where are you,'
+        + " where are you, Yolanda?</p><p>Warm regards,</p><h3>The GHGA Team</h3>"
+        + "</body></html>"
+    )
     assert html_content.strip() == expected_html
 
 
@@ -71,46 +82,47 @@ def test_email_construction(notification_details):
     "notification_details",
     [sample_notification],
 )
-@pytest.mark.asyncio
-async def test_transmission(notification_details):
+@pytest.mark.asyncio(scope="session")
+async def test_transmission(
+    joint_fixture: JointFixture,  # noqa: F811
+    notification_details,
+):
     """Test that the email that the test server gets is what we expect"""
     config = get_config([SMTP_TEST_CONFIG])
     notification = make_notification(notification_details)
 
-    smtp_client = SmtpClient(config=config)
     server = DummyServer(config=config)
 
-    notifier = Notifier(config=config, smtp_client=smtp_client)
-
-    # send the notification so it gets intercepted by the dummy client
-    expected_email = notifier._construct_email(notification=notification)
+    expected_email = joint_fixture.notifier._construct_email(  # type: ignore
+        notification=notification,
+    )
 
     # tell the smtp client to send the message and compare that with what is received
     async with server.expect_email(expected_email=expected_email):
-        await notifier.send_notification(notification=notification)
-        asyncio.get_running_loop().stop()
+        # send the notification so it gets intercepted by the dummy client
+        await joint_fixture.notifier.send_notification(notification=notification)
 
 
-@pytest.mark.asyncio
-async def test_failed_authentication():
+@pytest.mark.asyncio(scope="session")
+async def test_failed_authentication(joint_fixture: JointFixture):  # noqa: F811
     """Change login credentials so authentication fails."""
     config = get_config([SMTP_TEST_CONFIG])
     server = DummyServer(config=config)
     server.login = "bob@bobswebsite.com"
     server.password = "notCorrect"
     notification = make_notification(sample_notification)
-    smtp_client = SmtpClient(config=config)
-    notifier = Notifier(config=config, smtp_client=smtp_client)
-    expected_email = notifier._construct_email(notification=notification)
+
+    expected_email = joint_fixture.notifier._construct_email(  # type: ignore
+        notification=notification,
+    )
 
     # send the notification so it gets intercepted by the dummy client
     with pytest.raises(SmtpClient.FailedLoginError):
         async with server.expect_email(expected_email=expected_email):
-            await notifier.send_notification(notification=notification)
-            asyncio.get_running_loop().stop()
+            await joint_fixture.notifier.send_notification(notification=notification)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_consume_thru_send(joint_fixture: JointFixture):  # noqa: F811
     """Verify that the event is correctly translated into a basic email object"""
     await joint_fixture.kafka.publish_event(

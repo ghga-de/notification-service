@@ -113,9 +113,8 @@ class Notifier(NotifierPort):
             self._smtp_client.send_email_message(message)
 
             # update the notification record to show that the notification has been sent.
-            await self._notification_record_dao.update(
-                dto=notification_record.model_copy(update={"sent": True})
-            )
+            notification_record.sent = True
+            await self._notification_record_dao.update(dto=notification_record)
 
     def _construct_email(
         self, *, notification: event_schemas.Notification

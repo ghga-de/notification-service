@@ -136,7 +136,7 @@ async def test_consume_thru_send(joint_fixture: JointFixture):  # noqa: F811
 
 @pytest.mark.asyncio(scope="session")
 async def test_helper_functions(joint_fixture: JointFixture):  # noqa: F811
-    """Unit test for the _ensure_not_sent function, _create_notification_record,
+    """Unit test for the _check_if_sent function, _create_notification_record,
     and _register_new_notification function.
     """
     # first, create a notification
@@ -155,8 +155,8 @@ async def test_helper_functions(joint_fixture: JointFixture):  # noqa: F811
 
     assert actual_record.model_dump() == expected_record.model_dump()
 
-    # Now check the _ensure_not_sent function before the record has been inserted
-    assert await joint_fixture.notifier._ensure_not_sent(  # type: ignore
+    # Now check the _check_if_sent function before the record has been inserted
+    assert not await joint_fixture.notifier._check_if_sent(  # type: ignore
         hash_sum=actual_record.hash_sum
     )
 
@@ -174,7 +174,7 @@ async def test_helper_functions(joint_fixture: JointFixture):  # noqa: F811
     assert record_in_db.model_dump() == actual_record.model_dump()
 
     # Record still has not been sent, but now it's in the database. Do another check
-    assert await joint_fixture.notifier._ensure_not_sent(  # type: ignore
+    assert not await joint_fixture.notifier._check_if_sent(  # type: ignore
         hash_sum=actual_record.hash_sum
     )
 
@@ -184,8 +184,8 @@ async def test_helper_functions(joint_fixture: JointFixture):  # noqa: F811
         dto=actual_record
     )
 
-    # Now the record has been marked as sent, so _ensure_not_sent should return False
-    assert not await joint_fixture.notifier._ensure_not_sent(  # type: ignore
+    # Now the record has been marked as sent, so _check_if_sent should return False
+    assert await joint_fixture.notifier._check_if_sent(  # type: ignore
         hash_sum=actual_record.hash_sum
     )
 
@@ -205,8 +205,8 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):  # noq
         notification=notification_event
     )
 
-    # the record hasn't been sent, so this should return True
-    assert await joint_fixture.notifier._ensure_not_sent(  # type: ignore
+    # the record hasn't been sent, so this should return False
+    assert not await joint_fixture.notifier._check_if_sent(  # type: ignore
         hash_sum=record.hash_sum
     )
 
@@ -221,7 +221,7 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):  # noq
         await joint_fixture.event_subscriber.run(forever=False)
 
     # Verify that the notification has now been marked as sent
-    assert not await joint_fixture.notifier._ensure_not_sent(  # type: ignore
+    assert await joint_fixture.notifier._check_if_sent(  # type: ignore
         hash_sum=record.hash_sum
     )
 

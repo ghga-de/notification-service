@@ -74,18 +74,17 @@ class Notifier(NotifierPort):
         hash_sum = sha256(notification.model_dump_json().encode("utf-8")).hexdigest()
         return models.NotificationRecord(hash_sum=hash_sum, sent=False)
 
-    async def _ensure_not_sent(self, *, hash_sum: str) -> bool:
-        """Ensures that the notification has not been sent already.
+    async def _check_if_sent(self, *, hash_sum: str) -> bool:
+        """Check whether the notification has been sent already.
 
         Returns:
-        - `True` if the notification **has not** been sent yet.
-        - `False` if the notification **has** already been sent.
+        - `False` if the notification **has not** been sent yet.
+        - `True` if the notification **has** already been sent.
         """
         with suppress(ResourceNotFoundError):
             record = await self._notification_record_dao.get_by_id(id_=hash_sum)
-            if record.sent:
-                return False
-        return True
+            return record.sent
+        return False
 
     async def _register_new_notification(
         self, *, notification_record: models.NotificationRecord
@@ -100,8 +99,8 @@ class Notifier(NotifierPort):
             notification=notification
         )
 
-        # Verify that the notification has not been sent already, abort if so
-        if not await self._ensure_not_sent(hash_sum=notification_record.hash_sum):
+        # Abort if the notification has been sent already
+        if await self._check_if_sent(hash_sum=notification_record.hash_sum):
             log.info("Notification already sent, skipping.")
             return
 

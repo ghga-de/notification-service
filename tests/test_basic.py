@@ -15,11 +15,13 @@
 
 """Test basic event consumption"""
 from hashlib import sha256
+from typing import cast
 
 import pytest
 
 from ns.adapters.outbound.smtp_client import SmtpClient
 from ns.core.models import NotificationRecord
+from ns.core.notifier import Notifier
 from tests.fixtures.joint import JointFixture
 from tests.fixtures.server import DummyServer
 from tests.fixtures.utils import make_notification
@@ -44,16 +46,19 @@ async def test_email_construction(
     notification_details,
 ):
     """Verify that the email is getting constructed properly from the template."""
+    # Cast notifier type
+    joint_fixture.notifier = cast(Notifier, joint_fixture.notifier)
+
     notification = make_notification(notification_details)
 
-    msg = joint_fixture.notifier._construct_email(notification=notification)  # type: ignore
+    msg = joint_fixture.notifier._construct_email(notification=notification)
 
     assert msg is not None
 
     plaintext_body = msg.get_body(preferencelist="plain")
     assert plaintext_body is not None
 
-    plaintext_content = plaintext_body.get_content()
+    plaintext_content = plaintext_body.get_content()  # type: ignore
     expected_plaintext = (
         "Dear Yolanda Martinez,\n\nWhere are you, where are you, Yolanda?\n"
         + "\nWarm regards,\n\nThe GHGA Team"
@@ -63,7 +68,7 @@ async def test_email_construction(
     html_body = msg.get_body(preferencelist="html")
     assert html_body is not None
 
-    html_content = html_body.get_content()
+    html_content = html_body.get_content()  # type: ignore
     assert html_content is not None
 
     expected_html = (
@@ -78,6 +83,9 @@ async def test_email_construction(
 @pytest.mark.asyncio(scope="session")
 async def test_failed_authentication(joint_fixture: JointFixture):
     """Change login credentials so authentication fails."""
+    # Cast notifier type
+    joint_fixture.notifier = cast(Notifier, joint_fixture.notifier)
+
     server = DummyServer(config=joint_fixture.config)
 
     # change the login credentials so that the authentication fails
@@ -85,7 +93,7 @@ async def test_failed_authentication(joint_fixture: JointFixture):
     server.password = "notCorrect"
     notification = make_notification(sample_notification)
 
-    expected_email = joint_fixture.notifier._construct_email(  # type: ignore
+    expected_email = joint_fixture.notifier._construct_email(
         notification=notification,
     )
 
@@ -95,11 +103,11 @@ async def test_failed_authentication(joint_fixture: JointFixture):
             await joint_fixture.notifier.send_notification(notification=notification)
 
     # verify that the email is in the database but not marked as sent
-    expected_record = joint_fixture.notifier._create_notification_record(  # type: ignore
+    expected_record = joint_fixture.notifier._create_notification_record(
         notification=notification
     )
 
-    record_in_db = await joint_fixture.notifier._notification_record_dao.get_by_id(  # type: ignore
+    record_in_db = await joint_fixture.notifier._notification_record_dao.get_by_id(
         id_=expected_record.hash_sum
     )
 
@@ -134,6 +142,9 @@ async def test_helper_functions(joint_fixture: JointFixture):
     """Unit test for the _check_if_sent function, _create_notification_record,
     and _register_new_notification function.
     """
+    # Cast notifier type
+    joint_fixture.notifier = cast(Notifier, joint_fixture.notifier)
+
     # first, create a notification
     notification = make_notification(sample_notification)
 
@@ -144,24 +155,24 @@ async def test_helper_functions(joint_fixture: JointFixture):
     )
 
     # Now create the record using the notifier's function and compare
-    actual_record = joint_fixture.notifier._create_notification_record(  # type: ignore
+    actual_record = joint_fixture.notifier._create_notification_record(
         notification=notification
     )
 
     assert actual_record.model_dump() == expected_record.model_dump()
 
     # Now check the _check_if_sent function before the record has been inserted
-    assert not await joint_fixture.notifier._check_if_sent(  # type: ignore
+    assert not await joint_fixture.notifier._check_if_sent(
         hash_sum=actual_record.hash_sum
     )
 
     # register the notification
-    await joint_fixture.notifier._register_new_notification(  # type: ignore
+    await joint_fixture.notifier._register_new_notification(
         notification_record=actual_record
     )
 
     # Verify the record is in the database
-    record_in_db = await joint_fixture.notifier._notification_record_dao.get_by_id(  # type: ignore
+    record_in_db = await joint_fixture.notifier._notification_record_dao.get_by_id(
         id_=actual_record.hash_sum
     )
 
@@ -169,25 +180,24 @@ async def test_helper_functions(joint_fixture: JointFixture):
     assert record_in_db.model_dump() == actual_record.model_dump()
 
     # Record still has not been sent, but now it's in the database. Do another check
-    assert not await joint_fixture.notifier._check_if_sent(  # type: ignore
+    assert not await joint_fixture.notifier._check_if_sent(
         hash_sum=actual_record.hash_sum
     )
 
     # Now mark the record as sent
     actual_record.sent = True
-    await joint_fixture.notifier._notification_record_dao.update(  # type: ignore
-        dto=actual_record
-    )
+    await joint_fixture.notifier._notification_record_dao.update(dto=actual_record)
 
     # Now the record has been marked as sent, so _check_if_sent should return False
-    assert await joint_fixture.notifier._check_if_sent(  # type: ignore
-        hash_sum=actual_record.hash_sum
-    )
+    assert await joint_fixture.notifier._check_if_sent(hash_sum=actual_record.hash_sum)
 
 
 @pytest.mark.asyncio(scope="session")
 async def test_idempotence_and_transmission(joint_fixture: JointFixture):
     """Consume identical events and verify that only one email is sent."""
+    # Cast notifier type
+    joint_fixture.notifier = cast(Notifier, joint_fixture.notifier)
+
     notification_event = make_notification(sample_notification)
     await joint_fixture.kafka.publish_event(
         payload=notification_event.model_dump(),
@@ -196,17 +206,15 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
     )
 
     # generate the hash sum for the notification
-    record = joint_fixture.notifier._create_notification_record(  # type: ignore
+    record = joint_fixture.notifier._create_notification_record(
         notification=notification_event
     )
 
     # the record hasn't been sent, so this should return False
-    assert not await joint_fixture.notifier._check_if_sent(  # type: ignore
-        hash_sum=record.hash_sum
-    )
+    assert not await joint_fixture.notifier._check_if_sent(hash_sum=record.hash_sum)
 
     server = DummyServer(config=joint_fixture.config)
-    expected_email = joint_fixture.notifier._construct_email(  # type: ignore
+    expected_email = joint_fixture.notifier._construct_email(
         notification=notification_event,
     )
 
@@ -216,9 +224,7 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
         await joint_fixture.event_subscriber.run(forever=False)
 
     # Verify that the notification has now been marked as sent
-    assert await joint_fixture.notifier._check_if_sent(  # type: ignore
-        hash_sum=record.hash_sum
-    )
+    assert await joint_fixture.notifier._check_if_sent(hash_sum=record.hash_sum)
 
     # Now publish the same event again
     await joint_fixture.kafka.publish_event(

@@ -107,13 +107,12 @@ class Notifier(NotifierPort):
         # Add the notification to the database (with sent=False)
         await self._register_new_notification(notification_record=notification_record)
 
-        if len(notification.recipient_email) > 0:
-            message = self._construct_email(notification=notification)
-            self._smtp_client.send_email_message(message)
+        message = self._construct_email(notification=notification)
+        self._smtp_client.send_email_message(message)
 
-            # update the notification record to show that the notification has been sent.
-            notification_record.sent = True
-            await self._notification_record_dao.update(dto=notification_record)
+        # update the notification record to show that the notification has been sent.
+        notification_record.sent = True
+        await self._notification_record_dao.update(dto=notification_record)
 
     def _construct_email(
         self, *, notification: event_schemas.Notification

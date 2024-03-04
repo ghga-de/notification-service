@@ -74,7 +74,7 @@ class Notifier(NotifierPort):
         hash_sum = sha256(notification.model_dump_json().encode("utf-8")).hexdigest()
         return models.NotificationRecord(hash_sum=hash_sum, sent=False)
 
-    async def _check_if_sent(self, *, hash_sum: str) -> bool:
+    async def _has_been_sent(self, *, hash_sum: str) -> bool:
         """Check whether the notification has been sent already.
 
         Returns:
@@ -100,7 +100,7 @@ class Notifier(NotifierPort):
         )
 
         # Abort if the notification has been sent already
-        if await self._check_if_sent(hash_sum=notification_record.hash_sum):
+        if await self._has_been_sent(hash_sum=notification_record.hash_sum):
             log.info("Notification already sent, skipping.")
             return
 

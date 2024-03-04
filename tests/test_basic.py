@@ -139,7 +139,7 @@ async def test_consume_thru_send(joint_fixture: JointFixture):
 
 @pytest.mark.asyncio(scope="session")
 async def test_helper_functions(joint_fixture: JointFixture):
-    """Unit test for the _check_if_sent function, _create_notification_record,
+    """Unit test for the _has_been_sent function, _create_notification_record,
     and _register_new_notification function.
     """
     # Cast notifier type
@@ -161,8 +161,8 @@ async def test_helper_functions(joint_fixture: JointFixture):
 
     assert actual_record.model_dump() == expected_record.model_dump()
 
-    # Now check the _check_if_sent function before the record has been inserted
-    assert not await joint_fixture.notifier._check_if_sent(
+    # Now check the _has_been_sent function before the record has been inserted
+    assert not await joint_fixture.notifier._has_been_sent(
         hash_sum=actual_record.hash_sum
     )
 
@@ -180,7 +180,7 @@ async def test_helper_functions(joint_fixture: JointFixture):
     assert record_in_db.model_dump() == actual_record.model_dump()
 
     # Record still has not been sent, but now it's in the database. Do another check
-    assert not await joint_fixture.notifier._check_if_sent(
+    assert not await joint_fixture.notifier._has_been_sent(
         hash_sum=actual_record.hash_sum
     )
 
@@ -188,8 +188,8 @@ async def test_helper_functions(joint_fixture: JointFixture):
     actual_record.sent = True
     await joint_fixture.notifier._notification_record_dao.update(dto=actual_record)
 
-    # Now the record has been marked as sent, so _check_if_sent should return False
-    assert await joint_fixture.notifier._check_if_sent(hash_sum=actual_record.hash_sum)
+    # Now the record has been marked as sent, so _has_been_sent should return False
+    assert await joint_fixture.notifier._has_been_sent(hash_sum=actual_record.hash_sum)
 
 
 @pytest.mark.asyncio(scope="session")
@@ -211,7 +211,7 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
     )
 
     # the record hasn't been sent, so this should return False
-    assert not await joint_fixture.notifier._check_if_sent(hash_sum=record.hash_sum)
+    assert not await joint_fixture.notifier._has_been_sent(hash_sum=record.hash_sum)
 
     server = DummyServer(config=joint_fixture.config)
     expected_email = joint_fixture.notifier._construct_email(
@@ -224,7 +224,7 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
         await joint_fixture.event_subscriber.run(forever=False)
 
     # Verify that the notification has now been marked as sent
-    assert await joint_fixture.notifier._check_if_sent(hash_sum=record.hash_sum)
+    assert await joint_fixture.notifier._has_been_sent(hash_sum=record.hash_sum)
 
     # Now publish the same event again
     await joint_fixture.kafka.publish_event(

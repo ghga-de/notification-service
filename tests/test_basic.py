@@ -20,11 +20,6 @@ import pytest
 
 from ns.adapters.outbound.smtp_client import SmtpClient
 from ns.core.models import NotificationRecord
-from tests.conftest import (
-    joint_fixture,  # noqa: F401
-    kafka_fixture,  # noqa: F401
-    mongodb_fixture,  # noqa: F401
-)
 from tests.fixtures.joint import JointFixture
 from tests.fixtures.server import DummyServer
 from tests.fixtures.utils import make_notification
@@ -45,7 +40,7 @@ sample_notification = {
 )
 @pytest.mark.asyncio(scope="session")
 async def test_email_construction(
-    joint_fixture: JointFixture,  # noqa: F811
+    joint_fixture: JointFixture,
     notification_details,
 ):
     """Verify that the email is getting constructed properly from the template."""
@@ -81,7 +76,7 @@ async def test_email_construction(
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_failed_authentication(joint_fixture: JointFixture):  # noqa: F811
+async def test_failed_authentication(joint_fixture: JointFixture):
     """Change login credentials so authentication fails."""
     server = DummyServer(config=joint_fixture.config)
 
@@ -112,7 +107,7 @@ async def test_failed_authentication(joint_fixture: JointFixture):  # noqa: F811
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_consume_thru_send(joint_fixture: JointFixture):  # noqa: F811
+async def test_consume_thru_send(joint_fixture: JointFixture):
     """Verify that the event is correctly translated into a basic email object"""
     await joint_fixture.kafka.publish_event(
         payload={
@@ -135,7 +130,7 @@ async def test_consume_thru_send(joint_fixture: JointFixture):  # noqa: F811
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_helper_functions(joint_fixture: JointFixture):  # noqa: F811
+async def test_helper_functions(joint_fixture: JointFixture):
     """Unit test for the _check_if_sent function, _create_notification_record,
     and _register_new_notification function.
     """
@@ -191,7 +186,7 @@ async def test_helper_functions(joint_fixture: JointFixture):  # noqa: F811
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_idempotence_and_transmission(joint_fixture: JointFixture):  # noqa: F811
+async def test_idempotence_and_transmission(joint_fixture: JointFixture):
     """Consume identical events and verify that only one email is sent."""
     notification_event = make_notification(sample_notification)
     await joint_fixture.kafka.publish_event(

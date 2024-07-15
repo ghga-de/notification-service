@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 """Contains the concrete implementation of a NotifierPort"""
+
 import logging
 from contextlib import suppress
 from email.message import EmailMessage

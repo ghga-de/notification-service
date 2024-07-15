@@ -16,11 +16,12 @@
 
 """Defines the NotificationRecordDao, which manages notification records."""
 
+from typing import TypeAlias
+
 from hexkit.protocols.dao import (  # noqa: F401
     DaoNaturalId,
     ResourceNotFoundError,
 )
-from typing_extensions import TypeAlias
 
 from ns.core import models
 

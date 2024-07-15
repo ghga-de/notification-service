@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Contains a port for the notifier"""
+
 from abc import ABC, abstractmethod
 
 from ghga_event_schemas import pydantic_ as event_schemas

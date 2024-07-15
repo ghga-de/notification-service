@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Entrypoint of the package"""
+
 import asyncio
 
 from ns.main import consume_events

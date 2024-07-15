@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 """Contains the smtp client port"""
+
 from abc import ABC, abstractmethod
 from email.message import EmailMessage
 

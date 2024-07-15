@@ -15,6 +15,7 @@
 #
 
 """Contains the smtp client adapter"""
+
 import logging
 import smtplib
 import ssl
@@ -31,10 +32,14 @@ log = logging.getLogger(__name__)
 class SmtpClientConfig(BaseSettings):
     """Configuration details for the SmtpClient"""
 
-    smtp_host: str = Field(..., description="The mail server host to connect to")
-    smtp_port: int = Field(..., description="The port for the mail server connection")
-    login_user: str = Field(..., description="The login username or email")
-    login_password: SecretStr = Field(..., description="The login password")
+    smtp_host: str = Field(
+        default=..., description="The mail server host to connect to"
+    )
+    smtp_port: int = Field(
+        default=..., description="The port for the mail server connection"
+    )
+    login_user: str = Field(default=..., description="The login username or email")
+    login_password: SecretStr = Field(default=..., description="The login password")
     use_starttls: bool = Field(
         default=True, description="Boolean flag indicating the use of STARTTLS"
     )

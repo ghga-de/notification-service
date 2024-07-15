@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 """Event subscriber details for notification events"""
+
 import ghga_event_schemas.pydantic_ as event_schemas
 from ghga_event_schemas.validation import get_validated_payload
 from hexkit.custom_types import Ascii, JsonObject
@@ -28,12 +29,12 @@ class EventSubTranslatorConfig(BaseSettings):
     """Config for the event subscriber"""
 
     notification_event_topic: str = Field(
-        ...,
+        default=...,
         description="Name of the event topic used to track notification events",
         examples=["notifications"],
     )
     notification_event_type: str = Field(
-        ...,
+        default=...,
         description="The type to use for events containing content to be sent",
         examples=["notification"],
     )
@@ -56,7 +57,7 @@ class EventSubTranslator(EventSubscriberProtocol):
         await self._notifier.send_notification(notification=validated_payload)
 
     async def _consume_validated(
-        self, *, payload: JsonObject, type_: Ascii, topic: Ascii
+        self, *, payload: JsonObject, type_: Ascii, topic: Ascii, key: Ascii
     ) -> None:
         """Consumes an event"""
         if (

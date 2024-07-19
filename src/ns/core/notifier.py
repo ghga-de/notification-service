@@ -15,6 +15,7 @@
 #
 """Contains the concrete implementation of a NotifierPort"""
 
+import html
 import logging
 from contextlib import suppress
 from email.message import EmailMessage
@@ -126,7 +127,13 @@ class Notifier(NotifierPort):
         message["Subject"] = notification.subject
         message["From"] = self._config.from_address
 
-        payload_as_dict = notification.model_dump()
+        # Escape values exposed to the email in case they've been maliciously crafted
+        payload_as_dict = {}
+        for k, v in notification.model_dump().items():
+            if isinstance(v, list):
+                payload_as_dict[k] = [html.escape(_) for _ in v]
+            else:
+                payload_as_dict[k] = html.escape(v)
 
         # create plaintext html with template
         plaintext_template = Template(self._config.plaintext_email_template)

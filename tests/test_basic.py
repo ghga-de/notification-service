@@ -15,6 +15,7 @@
 
 """Test basic event consumption"""
 
+import html
 from hashlib import sha256
 from typing import cast
 
@@ -237,3 +238,49 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
     # is bogus. If no ConnectionError is raised, that means the Notifier didn't try
     # to send an email.
     await joint_fixture.event_subscriber.run(forever=False)
+
+
+async def test_html_escaping(joint_fixture: JointFixture):
+    """Make sure dirty args are escaped properly."""
+    # Cast notifier type
+    joint_fixture.notifier = cast(Notifier, joint_fixture.notifier)
+
+    injected_body = "<script>alert('danger');</script>"
+    injected_name = f"<p>{sample_notification["recipient_name"]}</p>"
+    injected_notification = {**sample_notification}
+    injected_notification["plaintext_body"] = injected_body
+    injected_notification["recipient_name"] = injected_name
+
+    # Precompute the escaped values and make sure they're not the same as the original
+    escaped_name = html.escape(injected_name)
+    escaped_body = html.escape(injected_body)
+    assert injected_name != escaped_name
+    assert injected_body != escaped_body
+
+    notification = make_notification(injected_notification)
+
+    msg = joint_fixture.notifier._construct_email(notification=notification)
+    assert msg is not None
+
+    plaintext_body = msg.get_body(preferencelist="plain")
+    assert plaintext_body is not None
+
+    plaintext_content = plaintext_body.get_content()  # type: ignore
+    expected_plaintext = (
+        f"Dear {escaped_name},\n\n{escaped_body}\n" + "\nWarm regards,\n\nThe GHGA Team"
+    )
+    assert plaintext_content.strip() == expected_plaintext
+
+    html_body = msg.get_body(preferencelist="html")
+    assert html_body is not None
+
+    html_content = html_body.get_content()  # type: ignore
+    assert html_content is not None
+
+    expected_html = (
+        '<!DOCTYPE html><html><head></head><body style="color: #00393f;'
+        + f'padding: 12px;"><h2>Dear {escaped_name},</h2><p>{escaped_body}</p>'
+        + "<p>Warm regards,</p><h3>The GHGA Team</h3>"
+        + "</body></html>"
+    )
+    assert html_content.strip() == expected_html

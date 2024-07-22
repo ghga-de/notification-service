@@ -117,11 +117,21 @@ class Notifier(NotifierPort):
         await self._notification_record_dao.update(dto=notification_record)
 
     def _build_email_subtype(
-        self, *, template_type: EmailTemplateType, values_dict: dict[str, str]
+        self, *, template_type: EmailTemplateType, email_vars: dict[str, str]
     ):
         """Builds an email message subtype (HTML or plaintext) from a template and
         a dictionary of values.
         """
+        # Escape values exposed to the email in case they've been maliciously crafted
+        if template_type == EmailTemplateType.HTML:
+            for k, v in email_vars.items():
+                if isinstance(v, list):
+                    email_vars[k] = ", ".join(
+                        [html.escape(list_element) for list_element in v]
+                    )
+                else:
+                    email_vars[k] = html.escape(v)
+
         template_str = (
             self._config.plaintext_email_template
             if template_type == EmailTemplateType.PLAINTEXT
@@ -133,7 +143,7 @@ class Notifier(NotifierPort):
 
         # Try to substitute the values into the template
         try:
-            email_subtype = template.substitute(values_dict)
+            email_subtype = template.substitute(email_vars)
         except KeyError as err:
             template_var_error = self.VariableNotSuppliedError(variable=err.args[0])
             log.critical(template_var_error, extra={"variable": err.args[0]})
@@ -164,20 +174,13 @@ class Notifier(NotifierPort):
 
         # create plaintext html with template
         plaintext_email = self._build_email_subtype(
-            template_type=EmailTemplateType.PLAINTEXT, values_dict=payload_as_dict
+            template_type=EmailTemplateType.PLAINTEXT, email_vars=payload_as_dict
         )
         message.set_content(plaintext_email)
 
-        # Escape values exposed to the email in case they've been maliciously crafted
-        for k, v in payload_as_dict.items():
-            if isinstance(v, list):
-                payload_as_dict[k] = ", ".join([html.escape(_) for _ in v])
-            else:
-                payload_as_dict[k] = html.escape(v)
-
         # create html version of email, replacing variables of $var format
         html_email = self._build_email_subtype(
-            template_type=EmailTemplateType.HTML, values_dict=payload_as_dict
+            template_type=EmailTemplateType.HTML, email_vars=payload_as_dict
         )
 
         # add the html version to the EmailMessage object

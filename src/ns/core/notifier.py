@@ -123,7 +123,7 @@ class Notifier(NotifierPort):
         a dictionary of values.
         """
         # Escape values exposed to the email in case they've been maliciously crafted
-        if template_type == EmailTemplateType.HTML:
+        if template_type != EmailTemplateType.PLAINTEXT:
             for k, v in email_vars.items():
                 if isinstance(v, list):
                     email_vars[k] = ", ".join(

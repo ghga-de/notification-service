@@ -241,21 +241,23 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
 
 
 async def test_html_escaping(joint_fixture: JointFixture):
-    """Make sure dirty args are escaped properly."""
+    """Make sure dirty args are escaped properly in the HTML email and unchanged in the
+    plaintext email.
+    """
     # Cast notifier type
     joint_fixture.notifier = cast(Notifier, joint_fixture.notifier)
 
-    injected_body = "<script>alert('danger');</script>"
-    injected_name = f"<p>{sample_notification["recipient_name"]}</p>"
+    original_body = "<script>alert('danger');</script>"
+    original_name = f"<p>{sample_notification["recipient_name"]}</p>"
     injected_notification = {**sample_notification}
-    injected_notification["plaintext_body"] = injected_body
-    injected_notification["recipient_name"] = injected_name
+    injected_notification["plaintext_body"] = original_body
+    injected_notification["recipient_name"] = original_name
 
     # Precompute the escaped values and make sure they're not the same as the original
-    escaped_name = html.escape(injected_name)
-    escaped_body = html.escape(injected_body)
-    assert injected_name != escaped_name
-    assert injected_body != escaped_body
+    escaped_name = html.escape(original_name)
+    escaped_body = html.escape(original_body)
+    assert original_name != escaped_name
+    assert original_body != escaped_body
 
     notification = make_notification(injected_notification)
 
@@ -267,7 +269,8 @@ async def test_html_escaping(joint_fixture: JointFixture):
 
     plaintext_content = plaintext_body.get_content()  # type: ignore
     expected_plaintext = (
-        f"Dear {escaped_name},\n\n{escaped_body}\n" + "\nWarm regards,\n\nThe GHGA Team"
+        f"Dear {original_name},\n\n{original_body}\n"
+        + "\nWarm regards,\n\nThe GHGA Team"
     )
     assert plaintext_content.strip() == expected_plaintext
 

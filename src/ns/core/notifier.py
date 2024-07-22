@@ -160,19 +160,20 @@ class Notifier(NotifierPort):
         message["Subject"] = notification.subject
         message["From"] = self._config.from_address
 
-        # Escape values exposed to the email in case they've been maliciously crafted
-        payload_as_dict = {}
-        for k, v in notification.model_dump().items():
-            if isinstance(v, list):
-                payload_as_dict[k] = ", ".join([html.escape(_) for _ in v])
-            else:
-                payload_as_dict[k] = html.escape(v)
+        payload_as_dict = {**notification.model_dump()}
 
         # create plaintext html with template
         plaintext_email = self._build_email_subtype(
             template_type=EmailTemplateType.PLAINTEXT, values_dict=payload_as_dict
         )
         message.set_content(plaintext_email)
+
+        # Escape values exposed to the email in case they've been maliciously crafted
+        for k, v in payload_as_dict.items():
+            if isinstance(v, list):
+                payload_as_dict[k] = ", ".join([html.escape(_) for _ in v])
+            else:
+                payload_as_dict[k] = html.escape(v)
 
         # create html version of email, replacing variables of $var format
         html_email = self._build_email_subtype(

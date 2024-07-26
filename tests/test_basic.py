@@ -75,7 +75,7 @@ async def test_email_construction(
     plaintext_body = msg.get_body(preferencelist="plain")
     assert plaintext_body is not None
 
-    plaintext_content = plaintext_body.get_content()  # type: ignore
+    plaintext_content = plaintext_body.get_content()
     expected_plaintext = (
         "Dear Yolanda Martinez,\n\nWhere are you, where are you, Yolanda?\n"
         + "\nWarm regards,\n\nThe GHGA Team"
@@ -85,7 +85,7 @@ async def test_email_construction(
     html_body = msg.get_body(preferencelist="html")
     assert html_body is not None
 
-    html_content = html_body.get_content()  # type: ignore
+    html_content = html_body.get_content()
     assert html_content is not None
 
     expected_html = (
@@ -290,7 +290,7 @@ async def test_html_escaping(joint_fixture: JointFixture):
     plaintext_body = msg.get_body(preferencelist="plain")
     assert plaintext_body is not None
 
-    plaintext_content = plaintext_body.get_content()  # type: ignore
+    plaintext_content = plaintext_body.get_content()
     expected_plaintext = (
         f"Dear {original_name},\n\n{original_body}\n"
         + "\nWarm regards,\n\nThe GHGA Team"
@@ -300,7 +300,7 @@ async def test_html_escaping(joint_fixture: JointFixture):
     html_body = msg.get_body(preferencelist="html")
     assert html_body is not None
 
-    html_content = html_body.get_content()  # type: ignore
+    html_content = html_body.get_content()
     assert html_content is not None
 
     expected_html = (

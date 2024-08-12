@@ -17,9 +17,11 @@
 """Contains the smtp client adapter"""
 
 import logging
-import smtplib
 import ssl
+from collections.abc import Generator
+from contextlib import contextmanager
 from email.message import EmailMessage
+from smtplib import SMTP, SMTPAuthenticationError, SMTPException
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings
@@ -52,27 +54,35 @@ class SmtpClient(SmtpClientPort):
         """Assign config, which should contain all needed info"""
         self._config = config
 
+    @contextmanager
+    def get_connection(self) -> Generator[SMTP, None, None]:
+        """Establish a connection to the SMTP server"""
+        with SMTP(self._config.smtp_host, self._config.smtp_port) as server:
+            yield server
+
     def send_email_message(self, message: EmailMessage):
         """Send an email message.
 
-        Creates an ssl security context if configured, then log in with the configured
-        credentials and send the provided email message.
+        Creates an ssl security context if configured, then logs in with the configured
+        credentials and sends the provided email message.
         """
         try:
-            with smtplib.SMTP(self._config.smtp_host, self._config.smtp_port) as server:
+            with self.get_connection() as server:
                 if self._config.use_starttls:
                     # create ssl security context per Python's Security considerations
                     context = ssl.create_default_context()
                     server.starttls(context=context)
-                try:
-                    server.login(
-                        self._config.login_user,
-                        self._config.login_password.get_secret_value(),
-                    )
-                except smtplib.SMTPAuthenticationError as err:
-                    login_error = self.FailedLoginError()
-                    log.critical(login_error)
-                    raise login_error from err
+
+                if self._config.login_user or self._config.login_password:
+                    try:
+                        server.login(
+                            self._config.login_user,
+                            self._config.login_password.get_secret_value(),
+                        )
+                    except SMTPAuthenticationError as err:
+                        login_error = self.FailedLoginError()
+                        log.critical(login_error)
+                        raise login_error from err
 
                 # check for a connection
                 if server.noop()[0] != 250:
@@ -81,7 +91,7 @@ class SmtpClient(SmtpClientPort):
                     raise connection_error
 
                 server.send_message(msg=message)
-        except smtplib.SMTPException as exc:
+        except SMTPException as exc:
             error = self.GeneralSmtpException(error_info=exc.args[0])
             log.error(error, extra={"error_info": exc.args[0]})
             raise error from exc

@@ -22,8 +22,9 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from email.message import EmailMessage
 from smtplib import SMTP, SMTPAuthenticationError, SMTPException
+from typing import Self
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings
 
 from ns.ports.outbound.smtp_client import SmtpClientPort
@@ -40,11 +41,27 @@ class SmtpClientConfig(BaseSettings):
     smtp_port: int = Field(
         default=..., description="The port for the mail server connection"
     )
-    login_user: str = Field(default="", description="The login username or email")
-    login_password: SecretStr = Field(default="", description="The login password")
+    login_user: str | None = Field(
+        default=None, description="The login username or email"
+    )
+    login_password: SecretStr | None = Field(
+        default=None, description="The login password"
+    )
     use_starttls: bool = Field(
         default=True, description="Boolean flag indicating the use of STARTTLS"
     )
+
+    @model_validator(mode="after")
+    def validate_prefix(self) -> Self:
+        """Enforce setting both the user/pwd or leaving both unconfigured (`None`)"""
+        msg = "Login_user and login_password must be configured together or not at all."
+        nones = [
+            _
+            for _ in filter(lambda x: x is None, [self.login_user, self.login_password])
+        ]
+        if nones and len(nones) == 1:
+            raise ValueError(msg)
+        return self
 
 
 class SmtpClient(SmtpClientPort):
@@ -65,6 +82,8 @@ class SmtpClient(SmtpClientPort):
 
         Creates an ssl security context if configured, then logs in with the configured
         credentials and sends the provided email message.
+        In the case that username and password are `None`, authentication will not be
+        performed.
         """
         try:
             with self.get_connection() as server:
@@ -73,7 +92,10 @@ class SmtpClient(SmtpClientPort):
                     context = ssl.create_default_context()
                     server.starttls(context=context)
 
-                if self._config.login_user or self._config.login_password:
+                if (
+                    self._config.login_user is not None
+                    and self._config.login_password is not None
+                ):
                     try:
                         server.login(
                             self._config.login_user,

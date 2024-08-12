@@ -98,13 +98,36 @@ async def test_email_construction(
     assert html_content.strip() == expected_html
 
 
+async def test_bad_login_config():
+    """Verify that we get an error if credentials are misconfigured"""
+    with pytest.raises(ValueError):
+        SmtpClientConfig(
+            smtp_host="127.0.0.1",
+            smtp_port=587,
+            login_user="test",
+            login_password=None,
+        )
+
+    with pytest.raises(ValueError):
+        SmtpClientConfig(
+            smtp_host="127.0.0.1",
+            smtp_port=587,
+            login_user=None,
+            login_password="test",  # type: ignore
+        )
+
+
 @pytest.mark.parametrize(
-    "username", ["bob@bobswebsite.com", ""], ids=["WithUsername", "NoUsername"]
+    "username, password",
+    [
+        ("bob@bobswebsite.com", "passw0rd"),
+        ("bob@bobswebsite.com", ""),
+        ("", "passw0rd"),
+        (None, None),
+    ],
+    ids=["WithUsernameAndPassword", "BlankPassword", "BlankUsername", "NoAuth"],
 )
-@pytest.mark.parametrize(
-    "password", ["passw0rd", ""], ids=["WithPassword", "NoPassword"]
-)
-async def test_anonymous_smtp(username: str, password: str):
+async def test_smtp_authentication(username: str | None, password: str | None):
     """Verify that authentication is only used when credentials are configured."""
     config = SmtpClientConfig(
         smtp_host="127.0.0.1",
@@ -132,7 +155,7 @@ async def test_anonymous_smtp(username: str, password: str):
     smtp_client.send_email_message(message)
 
     # Verify that 'login' is only called when credentials are set
-    if username or password:
+    if username is not None and password is not None:
         mock_server.login.assert_called()
     else:
         mock_server.login.assert_not_called()

@@ -131,9 +131,21 @@ The service requires the following configuration parameters:
 
 - **`smtp_port`** *(integer)*: The port for the mail server connection.
 
-- **`login_user`** *(string)*: The login username or email. Default: `""`.
+- **`login_user`**: The login username or email. Default: `null`.
 
-- **`login_password`** *(string, format: password)*: The login password. Default: `""`.
+  - **Any of**
+
+    - *string*
+
+    - *null*
+
+- **`login_password`**: The login password. Default: `null`.
+
+  - **Any of**
+
+    - *string, format: password*
+
+    - *null*
 
 - **`use_starttls`** *(boolean)*: Boolean flag indicating the use of STARTTLS. Default: `true`.
 

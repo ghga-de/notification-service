@@ -38,8 +38,8 @@ class SmtpClientConfig(BaseSettings):
     smtp_port: int = Field(
         default=..., description="The port for the mail server connection"
     )
-    login_user: str = Field(default=..., description="The login username or email")
-    login_password: SecretStr = Field(default=..., description="The login password")
+    login_user: str = Field(default="", description="The login username or email")
+    login_password: SecretStr = Field(default="", description="The login password")
     use_starttls: bool = Field(
         default=True, description="Boolean flag indicating the use of STARTTLS"
     )

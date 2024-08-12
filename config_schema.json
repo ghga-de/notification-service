@@ -97,11 +97,13 @@
       "type": "integer"
     },
     "login_user": {
+      "default": "",
       "description": "The login username or email",
       "title": "Login User",
       "type": "string"
     },
     "login_password": {
+      "default": "",
       "description": "The login password",
       "format": "password",
       "title": "Login Password",
@@ -199,8 +201,6 @@
     "from_address",
     "smtp_host",
     "smtp_port",
-    "login_user",
-    "login_password",
     "notification_event_topic",
     "notification_event_type",
     "kafka_servers"

@@ -131,19 +131,11 @@ The service requires the following configuration parameters:
 
 - **`smtp_port`** *(integer)*: The port for the mail server connection.
 
-- **`login_user`**: The login username or email. Default: `null`.
+- **`smtp_auth`**: . Default: `null`.
 
   - **Any of**
 
-    - *string*
-
-    - *null*
-
-- **`login_password`**: The login password. Default: `null`.
-
-  - **Any of**
-
-    - *string, format: password*
+    - : Refer to *[#/$defs/SmtpAuthConfig](#%24defs/SmtpAuthConfig)*.
 
     - *null*
 
@@ -207,6 +199,15 @@ The service requires the following configuration parameters:
   false
   ```
 
+
+## Definitions
+
+
+- <a id="%24defs/SmtpAuthConfig"></a>**`SmtpAuthConfig`** *(object)*: Model to encapsulate SMTP authentication details.
+
+  - **`username`** *(string, required)*: The login username or email.
+
+  - **`password`** *(string, format: password, required)*: The login password.
 
 
 ### Usage:

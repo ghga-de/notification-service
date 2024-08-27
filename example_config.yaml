@@ -15,8 +15,6 @@ kafka_ssl_password: ''
 log_format: null
 log_level: INFO
 log_traceback: true
-login_password: '**********'
-login_user: test@test.com
 notification_event_topic: notifications
 notification_event_type: notification
 plaintext_email_template: 'Dear $recipient_name,
@@ -31,6 +29,9 @@ plaintext_email_template: 'Dear $recipient_name,
   The GHGA Team'
 service_instance_id: '001'
 service_name: ns
+smtp_auth:
+  password: '**********'
+  username: test@test.com
 smtp_host: 127.0.0.1
 smtp_port: 587
 use_starttls: false

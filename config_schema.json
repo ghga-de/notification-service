@@ -1,4 +1,29 @@
 {
+  "$defs": {
+    "SmtpAuthConfig": {
+      "description": "Model to encapsulate SMTP authentication details.",
+      "properties": {
+        "username": {
+          "description": "The login username or email",
+          "title": "Username",
+          "type": "string"
+        },
+        "password": {
+          "description": "The login password",
+          "format": "password",
+          "title": "Password",
+          "type": "string",
+          "writeOnly": true
+        }
+      },
+      "required": [
+        "username",
+        "password"
+      ],
+      "title": "SmtpAuthConfig",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "description": "Modifies the orginal Settings class provided by the user",
   "properties": {
@@ -96,33 +121,17 @@
       "title": "Smtp Port",
       "type": "integer"
     },
-    "login_user": {
+    "smtp_auth": {
       "anyOf": [
         {
-          "type": "string"
+          "$ref": "#/$defs/SmtpAuthConfig"
         },
         {
           "type": "null"
         }
       ],
       "default": null,
-      "description": "The login username or email",
-      "title": "Login User"
-    },
-    "login_password": {
-      "anyOf": [
-        {
-          "format": "password",
-          "type": "string",
-          "writeOnly": true
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "The login password",
-      "title": "Login Password"
+      "description": ""
     },
     "use_starttls": {
       "default": true,

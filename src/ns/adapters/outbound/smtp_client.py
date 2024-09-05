@@ -63,7 +63,7 @@ class SmtpClient(SmtpClientPort):
     @contextmanager
     def get_connection(self) -> Generator[SMTP, None, None]:
         """Establish a connection to the SMTP server"""
-        with SMTP(self._config.smtp_host, self._config.smtp_port) as server:
+        with SMTP(self._config.smtp_host, self._config.smtp_port, timeout=60) as server:
             yield server
 
     def send_email_message(self, message: EmailMessage):

@@ -77,6 +77,8 @@ class SmtpClient(SmtpClientPort):
         log.debug("Starting the 'send_email_message' function.")
         try:
             with self.get_connection() as server:
+                log.debug("Basic connection acquired with configured host and port.")
+
                 if self._config.use_starttls:
                     log.debug("Using SSL")
                     # create ssl security context per Python's Security considerations
@@ -97,6 +99,7 @@ class SmtpClient(SmtpClientPort):
                     log.debug("Skipping auth for SMTP.")
 
                 # check for a connection
+                log.debug("Pinging server...")
                 if server.noop()[0] != 250:
                     connection_error = self.ConnectionError()
                     log.critical(connection_error)

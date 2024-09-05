@@ -74,14 +74,17 @@ class SmtpClient(SmtpClientPort):
         In the case that username and password are `None`, authentication will not be
         performed.
         """
+        log.debug("Starting the 'send_email_message' function.")
         try:
             with self.get_connection() as server:
                 if self._config.use_starttls:
+                    log.debug("Using SSL")
                     # create ssl security context per Python's Security considerations
                     context = ssl.create_default_context()
                     server.starttls(context=context)
 
                 if self._config.smtp_auth:
+                    log.debug("Logging into SMTP with auth.")
                     username = self._config.smtp_auth.username
                     password = self._config.smtp_auth.password.get_secret_value()
                     try:
@@ -90,14 +93,18 @@ class SmtpClient(SmtpClientPort):
                         login_error = self.FailedLoginError()
                         log.critical(login_error)
                         raise login_error from err
+                else:
+                    log.debug("Skipping auth for SMTP.")
 
                 # check for a connection
                 if server.noop()[0] != 250:
                     connection_error = self.ConnectionError()
                     log.critical(connection_error)
                     raise connection_error
+                log.debug("Connected to SMTP server, sending message.")
 
                 server.send_message(msg=message)
+                log.debug("Message sent.")
         except SMTPException as exc:
             error = self.GeneralSmtpException(error_info=exc.args[0])
             log.error(error, extra={"error_info": exc.args[0]})

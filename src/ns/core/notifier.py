@@ -75,6 +75,7 @@ class Notifier(NotifierPort):
         self, *, notification: event_schemas.Notification
     ) -> models.NotificationRecord:
         """Creates a notification record from a notification event and correlation ID."""
+        log.debug("Creating new notification record.")
         correlation_id = get_correlation_id()
         notification_str = json.dumps(notification.model_dump(), sort_keys=True)
         concatenated = correlation_id + notification_str
@@ -88,6 +89,7 @@ class Notifier(NotifierPort):
         - `False` if the notification **has not** been sent yet.
         - `True` if the notification **has** already been sent.
         """
+        log.debug("Checking if notification has been sent yet.")
         with suppress(ResourceNotFoundError):
             record = await self._notification_record_dao.get_by_id(id_=hash_sum)
             return record.sent
@@ -97,7 +99,9 @@ class Notifier(NotifierPort):
         self, *, notification_record: models.NotificationRecord
     ):
         """Registers a new notification in the database"""
+        log.debug("Inserting record into database.")
         await self._notification_record_dao.upsert(dto=notification_record)
+        log.debug("Record successfully inserted into database.")
 
     async def send_notification(self, *, notification: event_schemas.Notification):
         """Sends notifications based on the channel info provided (e.g. email addresses)"""
@@ -105,6 +109,7 @@ class Notifier(NotifierPort):
         notification_record = self._create_notification_record(
             notification=notification
         )
+        log.debug("Notification record created")
 
         # Abort if the notification has been sent already
         if await self._has_been_sent(hash_sum=notification_record.hash_sum):
@@ -114,12 +119,16 @@ class Notifier(NotifierPort):
         # Add the notification to the database (with sent=False)
         await self._register_new_notification(notification_record=notification_record)
 
+        log.debug("Constructing email.")
         message = self._construct_email(notification=notification)
+        log.debug("Email constructed.")
         self._smtp_client.send_email_message(message)
 
         # update the notification record to show that the notification has been sent.
         notification_record.sent = True
+        log.debug("Notification sent! Updating database record with new status.")
         await self._notification_record_dao.update(dto=notification_record)
+        log.debug("Notification record successfully updated in the DB.")
 
     def _build_email_subtype(
         self, *, template_type: EmailTemplateType, email_vars: dict[str, str]

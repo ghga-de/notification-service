@@ -145,7 +145,7 @@ The service requires the following configuration parameters:
 
   - **Any of**
 
-    - *integer*: Exclusive minimum: `0`.
+    - *number*: Exclusive minimum: `0.0`.
 
     - *null*
 

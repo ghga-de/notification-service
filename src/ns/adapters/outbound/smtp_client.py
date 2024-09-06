@@ -23,7 +23,7 @@ from contextlib import contextmanager
 from email.message import EmailMessage
 from smtplib import SMTP, SMTPAuthenticationError, SMTPException
 
-from pydantic import BaseModel, Field, PositiveInt, SecretStr
+from pydantic import BaseModel, Field, PositiveFloat, SecretStr
 from pydantic_settings import BaseSettings
 
 from ns.ports.outbound.smtp_client import SmtpClientPort
@@ -51,7 +51,7 @@ class SmtpClientConfig(BaseSettings):
     use_starttls: bool = Field(
         default=True, description="Boolean flag indicating the use of STARTTLS"
     )
-    smtp_timeout: PositiveInt | None = Field(
+    smtp_timeout: PositiveFloat | None = Field(
         default=None,
         description=(
             "The maximum amount of time (in seconds) to wait for a connection to the"
@@ -70,9 +70,7 @@ class SmtpClient(SmtpClientPort):
     @contextmanager
     def get_connection(self) -> Generator[SMTP, None, None]:
         """Establish a connection to the SMTP server"""
-        timeout = (
-            float(self._config.smtp_timeout) if self._config.smtp_timeout else None
-        )
+        timeout = self._config.smtp_timeout if self._config.smtp_timeout else None
 
         try:
             log.debug("Attempting to establish SMTP connection (timeout=%s).", timeout)

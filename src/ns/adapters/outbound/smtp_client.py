@@ -52,7 +52,7 @@ class SmtpClientConfig(BaseSettings):
         default=True, description="Boolean flag indicating the use of STARTTLS"
     )
     smtp_timeout: PositiveFloat | None = Field(
-        default=None,
+        default=60,
         description=(
             "The maximum amount of time (in seconds) to wait for a connection to the"
             + " SMTP server. If set to `None`, the operation will wait indefinitely."

@@ -149,7 +149,7 @@
           "type": "null"
         }
       ],
-      "default": null,
+      "default": 60,
       "description": "The maximum amount of time (in seconds) to wait for a connection to the SMTP server. If set to `None`, the operation will wait indefinitely.",
       "title": "Smtp Timeout"
     },

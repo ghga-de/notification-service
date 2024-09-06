@@ -141,7 +141,7 @@ The service requires the following configuration parameters:
 
 - **`use_starttls`** *(boolean)*: Boolean flag indicating the use of STARTTLS. Default: `true`.
 
-- **`smtp_timeout`**: The maximum amount of time (in seconds) to wait for a connection to the SMTP server. If set to `None`, the operation will wait indefinitely. Default: `null`.
+- **`smtp_timeout`**: The maximum amount of time (in seconds) to wait for a connection to the SMTP server. If set to `None`, the operation will wait indefinitely. Default: `60`.
 
   - **Any of**
 

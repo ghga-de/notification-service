@@ -13,5 +13,5 @@ smtp_auth:
   password: test
 from_address: "test@test.com"
 use_starttls: false
-db_connection_str: "mongodb://mongodb:27017"
+mongo_dsn: "mongodb://mongodb:27017"
 db_name: "dev_db"

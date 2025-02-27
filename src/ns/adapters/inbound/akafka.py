@@ -20,24 +20,12 @@ from ghga_event_schemas.configs import NotificationEventsConfig
 from ghga_event_schemas.validation import get_validated_payload
 from hexkit.custom_types import Ascii, JsonObject
 from hexkit.protocols.eventsub import EventSubscriberProtocol
-from pydantic import Field
 
 from ns.ports.inbound.notifier import NotifierPort
 
 
 class EventSubTranslatorConfig(NotificationEventsConfig):
     """Config for the event subscriber"""
-
-    notification_topic: str = Field(
-        default=...,
-        description="Name of the event topic used to track notification events",
-        examples=["notifications"],
-    )
-    notification_type: str = Field(
-        default=...,
-        description="The type to use for events containing content to be sent",
-        examples=["notification"],
-    )
 
 
 class EventSubTranslator(EventSubscriberProtocol):

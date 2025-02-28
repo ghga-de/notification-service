@@ -173,7 +173,7 @@
       "title": "Smtp Timeout"
     },
     "notification_topic": {
-      "description": "Name of the event topic used to track notification events",
+      "description": "Name of the topic used for notification events.",
       "examples": [
         "notifications"
       ],
@@ -181,7 +181,7 @@
       "type": "string"
     },
     "notification_type": {
-      "description": "The type to use for events containing content to be sent",
+      "description": "The type used for notification events.",
       "examples": [
         "notification"
       ],

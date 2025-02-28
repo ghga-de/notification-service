@@ -175,7 +175,7 @@ The service requires the following configuration parameters:
 
     - *null*
 
-- **`notification_topic`** *(string, required)*: Name of the event topic used to track notification events.
+- **`notification_topic`** *(string, required)*: Name of the topic used for notification events.
 
 
   Examples:
@@ -185,7 +185,7 @@ The service requires the following configuration parameters:
   ```
 
 
-- **`notification_type`** *(string, required)*: The type to use for events containing content to be sent.
+- **`notification_type`** *(string, required)*: The type used for notification events.
 
 
   Examples:

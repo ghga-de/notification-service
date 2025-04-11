@@ -171,7 +171,7 @@ The service requires the following configuration parameters:
 
   - **Any of**
 
-    - <a id="properties/smtp_timeout/anyOf/0"></a>*number*: Exclusive minimum: `0.0`.
+    - <a id="properties/smtp_timeout/anyOf/0"></a>*number*: Exclusive minimum: `0`.
 
     - <a id="properties/smtp_timeout/anyOf/1"></a>*null*
 

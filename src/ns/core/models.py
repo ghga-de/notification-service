@@ -15,17 +15,19 @@
 #
 """Contains models for the notification service."""
 
-from pydantic import BaseModel, Field
+from pydantic import UUID4, BaseModel, Field
 
 
 class NotificationRecord(BaseModel):
     """Model for tracking which notifications have been sent.
 
-    The hash sum is used to identify the notification event content and the sent flag
+    The event_id is used for idempotence and the sent flag
     indicates if the notification has been sent.
     """
 
-    hash_sum: str = Field(..., description="Hash sum of notification event")
+    event_id: UUID4 = Field(
+        ..., description="Unique identifier for the notification event"
+    )
     sent: bool = Field(
         ..., description="Flag indicating if the notification has been sent"
     )

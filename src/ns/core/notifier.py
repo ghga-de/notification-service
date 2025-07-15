@@ -16,22 +16,21 @@
 """Contains the concrete implementation of a NotifierPort"""
 
 import html
-import json
 import logging
-from contextlib import suppress
 from email.message import EmailMessage
 from enum import Enum
-from hashlib import sha256
 from string import Template
 
 from ghga_event_schemas import pydantic_ as event_schemas
-from hexkit.correlation import get_correlation_id
 from pydantic import EmailStr, Field
 from pydantic_settings import BaseSettings
 
 from ns.core import models
 from ns.ports.inbound.notifier import NotifierPort
-from ns.ports.outbound.dao import NotificationRecordDaoPort, ResourceNotFoundError
+from ns.ports.outbound.dao import (
+    NotificationRecordDaoPort,
+    ResourceAlreadyExistsError,
+)
 from ns.ports.outbound.smtp_client import SmtpClientPort
 
 log = logging.getLogger(__name__)
@@ -71,56 +70,44 @@ class Notifier(NotifierPort):
         self._smtp_client = smtp_client
         self._notification_record_dao = notification_record_dao
 
-    def _create_notification_record(
-        self, *, notification: event_schemas.Notification
-    ) -> models.NotificationRecord:
-        """Creates a notification record from a notification event and correlation ID."""
-        correlation_id = get_correlation_id()
-        notification_str = json.dumps(notification.model_dump(), sort_keys=True)
-        concatenated = correlation_id + notification_str
-        hash_sum = sha256(concatenated.encode("utf-8")).hexdigest()
-        return models.NotificationRecord(hash_sum=hash_sum, sent=False)
-
-    async def _has_been_sent(self, *, hash_sum: str) -> bool:
-        """Check whether the notification has been sent already.
-
-        Returns:
-        - `False` if the notification **has not** been sent yet.
-        - `True` if the notification **has** already been sent.
-        """
-        with suppress(ResourceNotFoundError):
-            record = await self._notification_record_dao.get_by_id(id_=hash_sum)
-            return record.sent
-        return False
-
-    async def _register_new_notification(
-        self, *, notification_record: models.NotificationRecord
+    async def send_notification(
+        self,
+        *,
+        notification: event_schemas.Notification,
+        notification_record: models.NotificationRecord,
     ):
-        """Registers a new notification in the database"""
-        await self._notification_record_dao.upsert(dto=notification_record)
-
-    async def send_notification(self, *, notification: event_schemas.Notification):
         """Sends notifications based on the channel info provided (e.g. email addresses)"""
-        # Generate sha-256 hash of the notification payload
-        notification_record = self._create_notification_record(
-            notification=notification
-        )
-
-        # Abort if the notification has been sent already
-        if await self._has_been_sent(hash_sum=notification_record.hash_sum):
-            log.info("Notification already sent, skipping.")
-            return
-
-        # Add the notification to the database (with sent=False)
-        await self._register_new_notification(notification_record=notification_record)
+        try:
+            # 99% of the time, the notification record will not exist yet.
+            await self._notification_record_dao.insert(notification_record)
+        except ResourceAlreadyExistsError:
+            # If we've already seen this event, see if it's been successfully sent.
+            log.debug("Notification record already exists, checking if sent.")
+            record = await self._notification_record_dao.get_by_id(
+                id_=notification_record.event_id
+            )
+            if record.sent:
+                log.info(
+                    "Notification already sent, skipping. Event_id=%s",
+                    notification_record.event_id,
+                )
+                return
+            # If it exists but hasn't been sent, we can proceed to send it.
 
         message = self._construct_email(notification=notification)
-        log.info("Sending notification")
+        log.info("Sending notification. Event_id=%s", notification_record.event_id)
         self._smtp_client.send_email_message(message)
+        log.info(
+            "Notification sent successfully. Event_id=%s", notification_record.event_id
+        )
 
         # update the notification record to show that the notification has been sent.
         notification_record.sent = True
         await self._notification_record_dao.update(dto=notification_record)
+        log.debug(
+            "Notification record marked 'sent'. Event_id=%s",
+            notification_record.event_id,
+        )
 
     def _build_email_subtype(
         self, *, template_type: EmailTemplateType, email_vars: dict[str, str]
@@ -169,6 +156,7 @@ class Notifier(NotifierPort):
         self, *, notification: event_schemas.Notification
     ) -> EmailMessage:
         """Constructs an EmailMessage object from the contents of an email notification event"""
+        log.debug("Constructing email message for notification.")
         message = EmailMessage()
         message["To"] = notification.recipient_email
         if notification.email_cc:

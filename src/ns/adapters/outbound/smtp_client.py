@@ -121,7 +121,6 @@ class SmtpClient(SmtpClientPort):
 
                 log.debug("NOOP successful, sending email.")
                 server.send_message(msg=message)
-                log.debug("Email sent.")
         except SMTPException as exc:
             error = self.GeneralSmtpException(error_info=exc.args[0])
             log.error(error, extra={"error_info": exc.args[0]})

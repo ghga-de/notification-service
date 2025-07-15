@@ -29,5 +29,5 @@ async def notification_record_dao_factory(
     return await dao_factory.get_dao(
         name="notification_records",
         dto_model=models.NotificationRecord,
-        id_field="hash_sum",
+        id_field="event_id",
     )

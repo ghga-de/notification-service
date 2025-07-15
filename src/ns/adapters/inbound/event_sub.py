@@ -15,12 +15,15 @@
 #
 """Event subscriber details for notification events"""
 
+from uuid import UUID
+
 import ghga_event_schemas.pydantic_ as event_schemas
 from ghga_event_schemas.configs import NotificationEventsConfig
 from ghga_event_schemas.validation import get_validated_payload
 from hexkit.custom_types import Ascii, JsonObject
 from hexkit.protocols.eventsub import EventSubscriberProtocol
 
+from ns.core import models
 from ns.ports.inbound.notifier import NotifierPort
 
 
@@ -37,19 +40,26 @@ class EventSubTranslator(EventSubscriberProtocol):
         self._config = config
         self._notifier = notifier
 
-    async def _send_notification(self, *, payload: JsonObject):
+    async def _send_notification(self, *, payload: JsonObject, event_id: UUID):
         """Validates the schema, then makes a call to the notifier with the payload"""
         validated_payload = get_validated_payload(
             payload=payload, schema=event_schemas.Notification
         )
-        await self._notifier.send_notification(notification=validated_payload)
+        notification_record = models.NotificationRecord(event_id=event_id, sent=False)
+        await self._notifier.send_notification(
+            notification=validated_payload, notification_record=notification_record
+        )
 
     async def _consume_validated(
-        self, *, payload: JsonObject, type_: Ascii, topic: Ascii, key: Ascii
+        self,
+        *,
+        payload: JsonObject,
+        type_: Ascii,
+        topic: Ascii,
+        key: Ascii,
+        event_id: UUID,
     ) -> None:
         """Consumes an event"""
-        if (
-            type_ == self._config.notification_type
-            and topic == self._config.notification_topic
-        ):
-            await self._send_notification(payload=payload)
+        # Don't need to check for topic and type because we only subscribe to one topic
+        # and hexkit ensures that the event is of the correct type.
+        await self._send_notification(payload=payload, event_id=event_id)

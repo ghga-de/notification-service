@@ -20,7 +20,7 @@ from hexkit.log import LoggingConfig
 from hexkit.providers.akafka import KafkaConfig
 from hexkit.providers.mongodb.provider import MongoDbConfig
 
-from ns.adapters.inbound.akafka import EventSubTranslatorConfig
+from ns.adapters.inbound.event_sub import EventSubTranslatorConfig
 from ns.adapters.outbound.smtp_client import SmtpClientConfig
 from ns.core.notifier import NotifierConfig
 

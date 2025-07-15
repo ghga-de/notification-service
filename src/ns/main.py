@@ -20,6 +20,10 @@ from hexkit.log import configure_logging
 from ns.config import Config
 from ns.inject import prepare_event_subscriber
 
+DB_VERSION = 2
+
+# TODO: Implement v2 migration to drop the collection `notification_records`
+
 
 async def consume_events(run_forever: bool = True):
     """Start consuming events with kafka"""

@@ -19,6 +19,8 @@ from abc import ABC, abstractmethod
 
 from ghga_event_schemas import pydantic_ as event_schemas
 
+from ns.core import models
+
 
 class NotifierPort(ABC):
     """Describes a notifier service in basic detail"""
@@ -38,6 +40,11 @@ class NotifierPort(ABC):
             super().__init__(message)
 
     @abstractmethod
-    async def send_notification(self, *, notification: event_schemas.Notification):
+    async def send_notification(
+        self,
+        *,
+        notification: event_schemas.Notification,
+        notification_record: models.NotificationRecord,
+    ):
         """Sends out notifications based on the event details"""
         ...

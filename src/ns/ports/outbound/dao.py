@@ -18,8 +18,18 @@
 
 from typing import TypeAlias
 
-from hexkit.protocols.dao import Dao, ResourceNotFoundError  # noqa: F401
+from hexkit.protocols.dao import (
+    Dao,
+    ResourceAlreadyExistsError,
+    ResourceNotFoundError,
+)
 
 from ns.core import models
+
+__all__ = [
+    "NotificationRecordDaoPort",
+    "ResourceAlreadyExistsError",
+    "ResourceNotFoundError",
+]
 
 NotificationRecordDaoPort: TypeAlias = Dao[models.NotificationRecord]

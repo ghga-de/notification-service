@@ -76,7 +76,7 @@ class Notifier(NotifierPort):
         notification: event_schemas.Notification,
         notification_record: models.NotificationRecord,
     ):
-        """Sends notifications based on the channel info provided (e.g. email addresses)"""
+        """Sends out notifications based on the event details"""
         try:
             # 99% of the time, the notification record will not exist yet.
             await self._notification_record_dao.insert(notification_record)

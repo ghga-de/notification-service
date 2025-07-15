@@ -22,7 +22,7 @@ from ns.core import models
 from ns.ports.outbound.dao import NotificationRecordDaoPort
 
 
-async def notification_record_dao_factory(
+async def get_notification_record_dao(
     *, dao_factory: DaoFactoryProtocol
 ) -> NotificationRecordDaoPort:
     """Construct a NotificationRecordDaoPort from the provided dao_factory"""

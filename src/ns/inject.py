@@ -17,14 +17,13 @@
 """DI functions."""
 
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, nullcontext
 
-from ghga_service_commons.utils.context import asyncnullcontext
 from hexkit.providers.akafka.provider import KafkaEventPublisher, KafkaEventSubscriber
 from hexkit.providers.mongodb.provider import MongoDbDaoFactory
 
 from ns.adapters.inbound.event_sub import EventSubTranslator
-from ns.adapters.outbound.dao import notification_record_dao_factory
+from ns.adapters.outbound.dao import get_notification_record_dao
 from ns.adapters.outbound.smtp_client import SmtpClient
 from ns.config import Config
 from ns.core.notifier import Notifier
@@ -36,7 +35,7 @@ async def prepare_core(*, config: Config) -> AsyncGenerator[NotifierPort, None]:
     """Constructs and initializes all core components and their outbound dependencies."""
     smtp_client = SmtpClient(config=config)
     async with MongoDbDaoFactory.construct(config=config) as dao_factory:
-        notification_record_dao = await notification_record_dao_factory(
+        notification_record_dao = await get_notification_record_dao(
             dao_factory=dao_factory
         )
         notifier = Notifier(
@@ -52,7 +51,7 @@ def prepare_core_with_override(
 ):
     """Resolve the notifier context manager based on config and override (if any)."""
     return (
-        asyncnullcontext(notifier_override)
+        nullcontext(notifier_override)
         if notifier_override
         else prepare_core(config=config)
     )

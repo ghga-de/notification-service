@@ -5,7 +5,7 @@ description = "The Notification Service (NS) handles notification kafka events."
 dependencies = [
     "typer>=0.15",
     "ghga-event-schemas>=10, < 11",
-    "ghga-service-commons>=4.2",
+    "ghga-service-commons>=5",
     "hexkit[akafka,mongodb,opentelemetry]>=6",
 ]
 

@@ -16,7 +16,6 @@
 """Service entry point function(s)."""
 
 from hexkit.log import configure_logging
-from hexkit.opentelemetry import configure_opentelemetry
 
 from ns.config import Config
 from ns.inject import prepare_event_subscriber
@@ -30,7 +29,6 @@ async def consume_events(run_forever: bool = True):
     config = Config()  # type: ignore [call-arg]
 
     configure_logging(config=config)
-    configure_opentelemetry(service_name=config.service_name, config=config)
 
     await run_db_migrations(config=config, target_version=DB_VERSION)
 

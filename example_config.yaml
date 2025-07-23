@@ -1,6 +1,5 @@
 db_name: dev_db
 db_version_collection: nsDbVersions
-enable_opentelemetry: false
 from_address: test@test.com
 generate_correlation_id: true
 html_email_template: '<!DOCTYPE html><html><head></head><body style="color: #00393f;padding:
@@ -28,9 +27,6 @@ mongo_dsn: '**********'
 mongo_timeout: null
 notification_topic: notifications
 notification_type: notification
-otel_exporter_endpoint: http://localhost:4318/
-otel_exporter_protocol: http/protobuf
-otel_trace_sampling_rate: 1.0
 plaintext_email_template: 'Dear $recipient_name,
 
 

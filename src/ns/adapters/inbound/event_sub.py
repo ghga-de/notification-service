@@ -21,7 +21,6 @@ import ghga_event_schemas.pydantic_ as event_schemas
 from ghga_event_schemas.configs import NotificationEventsConfig
 from ghga_event_schemas.validation import get_validated_payload
 from hexkit.custom_types import Ascii, JsonObject
-from hexkit.opentelemetry import start_span
 from hexkit.protocols.eventsub import EventSubscriberProtocol
 
 from ns.core import models
@@ -41,7 +40,6 @@ class EventSubTranslator(EventSubscriberProtocol):
         self._config = config
         self._notifier = notifier
 
-    @start_span()
     async def _send_notification(self, *, payload: JsonObject, event_id: UUID):
         """Validates the schema, then makes a call to the notifier with the payload"""
         validated_payload = get_validated_payload(

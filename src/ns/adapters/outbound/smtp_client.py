@@ -84,6 +84,7 @@ class SmtpClient(SmtpClientPort):
         except OSError as err:
             # TimeoutError is a subclass of OSError, but a blocked port can result
             # in a generic OSError without exhausting smtp_timeout
+            log.error("Failed to establish SMTP connection.", exc_info=True)
             raise self.ConnectionAttemptError() from err
 
     def send_email_message(self, message: EmailMessage):
@@ -123,5 +124,5 @@ class SmtpClient(SmtpClientPort):
                 server.send_message(msg=message)
         except SMTPException as exc:
             error = self.GeneralSmtpException(error_info=exc.args[0])
-            log.error(error, extra={"error_info": exc.args[0]})
+            log.error(error, exc_info=True)
             raise error from exc

@@ -14,20 +14,18 @@
 # limitations under the License.
 #
 
-"""DAO translator constructor"""
+"""Produce a DAO using a DAO factory"""
 
 from hexkit.protocols.dao import DaoFactoryProtocol
 
-from ns.core import models
-from ns.ports.outbound.dao import NotificationRecordDaoPort
+from ns.models import EventId
+from ns.ports.outbound.dao import EventIdDaoPort
 
 
-async def get_notification_record_dao(
-    *, dao_factory: DaoFactoryProtocol
-) -> NotificationRecordDaoPort:
-    """Construct a NotificationRecordDaoPort from the provided dao_factory"""
+async def get_event_id_dao(*, dao_factory: DaoFactoryProtocol) -> EventIdDaoPort:
+    """Construct a EventIdDaoPort from the provided dao_factory"""
     return await dao_factory.get_dao(
-        name="notification_records",
-        dto_model=models.NotificationRecord,
+        name="events",
+        dto_model=EventId,
         id_field="event_id",
     )

@@ -33,9 +33,8 @@ from ns.adapters.outbound.smtp_client import (
     SmtpClient,
     SmtpClientConfig,
 )
-from ns.core import models
-from ns.core.models import NotificationRecord
 from ns.core.notifier import Notifier
+from ns.ports.outbound.dao import EventIdDaoPort
 from tests.fixtures.config import get_config
 from tests.fixtures.joint import JointFixture
 from tests.fixtures.server import DummyServer
@@ -178,18 +177,19 @@ async def test_failed_authentication(joint_fixture: JointFixture):
     notification = make_notification(sample_notification)
 
     expected_email = notifier._construct_email(notification=notification)
-    record = models.NotificationRecord(event_id=TEST_EVENT_ID, sent=False)
 
     # send the notification so it gets intercepted by the dummy client
     with pytest.raises(SmtpClient.FailedLoginError):
         async with server.expect_email(expected_email=expected_email):
-            await notifier.send_notification(
-                notification=notification, notification_record=record
-            )
+            await notifier.send_notification(notification=notification)
 
-    record_in_db = await notifier._notification_record_dao.get_by_id(TEST_EVENT_ID)
-
-    assert not record_in_db.sent
+    # Make sure the event ID was not saved in the DB
+    event_id_dao = cast(
+        EventIdDaoPort,
+        joint_fixture.event_subscriber._translator._event_id_dao,  # type: ignore
+    )
+    with pytest.raises(ResourceNotFoundError):
+        _ = await event_id_dao.get_by_id(TEST_EVENT_ID)
 
 
 async def test_consume_thru_send(joint_fixture: JointFixture):
@@ -229,9 +229,13 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
         event_id=TEST_EVENT_ID,
     )
 
-    # the record is new, so there should be no record in the database yet
+    # the event is new, so there should be no matching event id in the database yet
+    event_id_dao = cast(
+        EventIdDaoPort,
+        joint_fixture.event_subscriber._translator._event_id_dao,  # type: ignore
+    )
     with pytest.raises(ResourceNotFoundError):
-        _ = await notifier._notification_record_dao.get_by_id(TEST_EVENT_ID)
+        _ = await event_id_dao.get_by_id(TEST_EVENT_ID)
 
     server = DummyServer(config=joint_fixture.config)
     expected_email = notifier._construct_email(notification=notification_event)
@@ -241,9 +245,9 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
         # consume the event to send the notification email to the dummy server
         await joint_fixture.event_subscriber.run(forever=False)
 
-    # Verify that the notification has now been marked as sent
-    record = await notifier._notification_record_dao.get_by_id(TEST_EVENT_ID)
-    assert record.sent is True
+    # Verify that the event id is now in the database
+    event_id = await event_id_dao.get_by_id(TEST_EVENT_ID)
+    assert event_id.event_id == TEST_EVENT_ID
 
     # Now publish the same event again
     await joint_fixture.kafka.publish_event(
@@ -321,11 +325,8 @@ async def test_timeout(port: int):
     dao_mock = AsyncMock()
     dao_mock.get_by_id.side_effect = ResourceNotFoundError(id_=TEST_EVENT_ID)
 
-    notifier = Notifier(
-        config=config, smtp_client=smtp_client, notification_record_dao=dao_mock
-    )
+    notifier = Notifier(config=config, smtp_client=smtp_client)
     with pytest.raises(smtp_client.ConnectionAttemptError):
         await notifier.send_notification(
-            notification=make_notification(sample_notification),
-            notification_record=NotificationRecord(event_id=TEST_EVENT_ID, sent=False),
+            notification=make_notification(sample_notification)
         )

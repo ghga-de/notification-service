@@ -14,22 +14,14 @@
 # limitations under the License.
 #
 
-"""Defines the NotificationRecordDao, which manages notification records."""
+"""Defines the EventIdDao, which tracks IDs of seen Kafka events."""
 
 from typing import TypeAlias
 
-from hexkit.protocols.dao import (
-    Dao,
-    ResourceAlreadyExistsError,
-    ResourceNotFoundError,
-)
+from hexkit.protocols.dao import Dao, ResourceAlreadyExistsError, ResourceNotFoundError
 
-from ns.core import models
+from ns.models import EventId
 
-__all__ = [
-    "NotificationRecordDaoPort",
-    "ResourceAlreadyExistsError",
-    "ResourceNotFoundError",
-]
+__all__ = ["EventIdDaoPort", "ResourceAlreadyExistsError", "ResourceNotFoundError"]
 
-NotificationRecordDaoPort: TypeAlias = Dao[models.NotificationRecord]
+EventIdDaoPort: TypeAlias = Dao[EventId]

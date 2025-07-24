@@ -25,12 +25,7 @@ from ghga_event_schemas import pydantic_ as event_schemas
 from pydantic import EmailStr, Field
 from pydantic_settings import BaseSettings
 
-from ns.core import models
 from ns.ports.inbound.notifier import NotifierPort
-from ns.ports.outbound.dao import (
-    NotificationRecordDaoPort,
-    ResourceAlreadyExistsError,
-)
 from ns.ports.outbound.smtp_client import SmtpClientPort
 
 log = logging.getLogger(__name__)
@@ -63,51 +58,19 @@ class Notifier(NotifierPort):
         *,
         config: NotifierConfig,
         smtp_client: SmtpClientPort,
-        notification_record_dao: NotificationRecordDaoPort,
     ):
         """Initialize the Notifier with configuration and smtp client"""
         self._config = config
         self._smtp_client = smtp_client
-        self._notification_record_dao = notification_record_dao
 
     async def send_notification(
         self,
         *,
         notification: event_schemas.Notification,
-        notification_record: models.NotificationRecord,
     ):
         """Sends out notifications based on the event details"""
-        try:
-            # 99% of the time, the notification record will not exist yet.
-            await self._notification_record_dao.insert(notification_record)
-        except ResourceAlreadyExistsError:
-            # If we've already seen this event, see if it's been successfully sent.
-            log.debug("Notification record already exists, checking if sent.")
-            record = await self._notification_record_dao.get_by_id(
-                id_=notification_record.event_id
-            )
-            if record.sent:
-                log.info(
-                    "Notification already sent, skipping. Event_id=%s",
-                    notification_record.event_id,
-                )
-                return
-            # If it exists but hasn't been sent, we can proceed to send it.
-
         message = self._construct_email(notification=notification)
-        log.info("Sending notification. Event_id=%s", notification_record.event_id)
         self._smtp_client.send_email_message(message)
-        log.info(
-            "Notification sent successfully. Event_id=%s", notification_record.event_id
-        )
-
-        # update the notification record to show that the notification has been sent.
-        notification_record.sent = True
-        await self._notification_record_dao.update(dto=notification_record)
-        log.debug(
-            "Notification record marked 'sent'. Event_id=%s",
-            notification_record.event_id,
-        )
 
     def _build_email_subtype(
         self, *, template_type: EmailTemplateType, email_vars: dict[str, str]

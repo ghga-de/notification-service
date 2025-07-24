@@ -23,7 +23,7 @@ from hexkit.providers.akafka.provider import KafkaEventPublisher, KafkaEventSubs
 from hexkit.providers.mongodb.provider import MongoDbDaoFactory
 
 from ns.adapters.inbound.event_sub import EventSubTranslator
-from ns.adapters.outbound.dao import get_notification_record_dao
+from ns.adapters.outbound.dao import get_event_id_dao
 from ns.adapters.outbound.smtp_client import SmtpClient
 from ns.config import Config
 from ns.core.notifier import Notifier
@@ -34,16 +34,9 @@ from ns.ports.inbound.notifier import NotifierPort
 async def prepare_core(*, config: Config) -> AsyncGenerator[NotifierPort, None]:
     """Constructs and initializes all core components and their outbound dependencies."""
     smtp_client = SmtpClient(config=config)
-    async with MongoDbDaoFactory.construct(config=config) as dao_factory:
-        notification_record_dao = await get_notification_record_dao(
-            dao_factory=dao_factory
-        )
-        notifier = Notifier(
-            config=config,
-            smtp_client=smtp_client,
-            notification_record_dao=notification_record_dao,
-        )
-        yield notifier
+
+    notifier = Notifier(config=config, smtp_client=smtp_client)
+    yield notifier
 
 
 def prepare_core_with_override(
@@ -67,12 +60,17 @@ async def prepare_event_subscriber(
     By default, the core dependencies are automatically prepared but you can also
     provide them using the notifier_override parameter.
     """
-    async with prepare_core_with_override(
-        config=config, notifier_override=notifier_override
-    ) as notifier:
+    async with (
+        prepare_core_with_override(
+            config=config, notifier_override=notifier_override
+        ) as notifier,
+        MongoDbDaoFactory.construct(config=config) as dao_factory,
+    ):
+        event_id_dao = await get_event_id_dao(dao_factory=dao_factory)
         event_sub_translator = EventSubTranslator(
             notifier=notifier,
             config=config,
+            event_id_dao=event_id_dao,
         )
 
         async with (

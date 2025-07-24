@@ -12,22 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-"""Contains models for the notification service."""
 
-from pydantic import UUID4, BaseModel, Field
+"""Non-domain-specific models for the notification service."""
+
+from pydantic import UUID4, BaseModel
 
 
-class NotificationRecord(BaseModel):
-    """Model for tracking which notifications have been sent.
+class EventId(BaseModel):
+    """A model to represent a Kafka event ID."""
 
-    The event_id is used for idempotence and the sent flag
-    indicates if the notification has been sent.
-    """
-
-    event_id: UUID4 = Field(
-        ..., description="Unique identifier for the notification event"
-    )
-    sent: bool = Field(
-        ..., description="Flag indicating if the notification has been sent"
-    )
+    event_id: UUID4

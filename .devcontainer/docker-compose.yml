@@ -1,15 +1,11 @@
-version: '3'
-
 services:
   app:
     build:
       context: .
       dockerfile: ./Dockerfile
       args:
-        # [Choice] Python version: 3, 3.8, 3.7, 3.6
-        VARIANT: 3.9
         # [Choice] Install Node.js
-        INSTALL_NODE: "true"
+        INSTALL_NODE: "false"
         NODE_VERSION: "lts/*"
         PACKAGE_NAME: "ns"
         # On Linux, you may need to update USER_UID and USER_GID below if not your local UID is not 1000.
@@ -40,14 +36,14 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.1
+    image: confluentinc/cp-zookeeper:7.8.4
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
-    image: confluentinc/cp-server:7.5.1
+    image: confluentinc/cp-server:7.8.4
     restart: unless-stopped
     depends_on:
       - zookeeper

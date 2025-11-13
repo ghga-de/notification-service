@@ -39,6 +39,7 @@ class JointFixture:
     event_subscriber: KafkaEventSubscriber
     notifier: NotifierPort
 
+
 @dataclass
 class JointFixtureDlq:
     """Returned by joint_fixture"""
@@ -74,6 +75,7 @@ async def joint_fixture(
             notifier=notifier,
         )
 
+
 @pytest_asyncio.fixture()
 async def joint_fixture_dlq(
     kafka: KafkaFixture,
@@ -100,5 +102,3 @@ async def joint_fixture_dlq(
             event_subscriber=event_subscriber,
             notifier=notifier,
         )
-
-        

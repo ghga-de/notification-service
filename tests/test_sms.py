@@ -196,9 +196,7 @@ async def test_failures(
 
 
 @pytest.mark.parametrize("response", LOX24_STATUS_CODES)
-async def test_dlq(
-    response: dict, httpx_mock: HTTPXMock, joint_fixture_dlq
-):
+async def test_dlq(response: dict, httpx_mock: HTTPXMock, joint_fixture_dlq):
     """Test that in case of a failure not SMS is sent"""
     assert joint_fixture_dlq.config.kafka_enable_dlq
 

@@ -63,10 +63,12 @@ class SmsClient(SmsClientPort):
     def _add_auth_headers(self) -> None:
         """Add authentication headers to the request headers."""
         if self._config.sms_auth:
-            self._headers['X-LOX24-AUTH-TOKEN'] = self._config.sms_auth.auth_token.get_secret_value()
+            self._headers["X-LOX24-AUTH-TOKEN"] = (
+                self._config.sms_auth.auth_token.get_secret_value()
+            )
         else:
             raise ValueError("SMS authentication configuration is missing.")
-    
+
     def _raise_for_status(self) -> None:
         """Raise an exception if the response indicates an error."""
         if self._response:
@@ -91,8 +93,13 @@ class SmsClient(SmsClientPort):
         json_data = {
             "phone": message["phone"],
             "text": message["text"],
-            "sender_id": "GHGA"
+            "sender_id": "GHGA",
         }
         log.info(f"Sending SMS to {json_data['phone']}")
-        self._response = post(f"https://{self._config.sms_host}/sms", headers=self._headers, json=json_data, timeout=100)
+        self._response = post(
+            f"https://{self._config.sms_host}/sms",
+            headers=self._headers,
+            json=json_data,
+            timeout=100,
+        )
         self._raise_for_status()

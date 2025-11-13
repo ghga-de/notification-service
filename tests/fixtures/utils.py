@@ -27,7 +27,9 @@ BASE_DIR = Path(__file__).parent.resolve()
 
 def make_email_notification(payload: JsonObject):
     """Convenience method to produce a validated notification object"""
-    return get_validated_payload(payload=payload, schema=event_schemas.EmailNotification)
+    return get_validated_payload(
+        payload=payload, schema=event_schemas.EmailNotification
+    )
 
 
 def make_sms_notification(payload: JsonObject):

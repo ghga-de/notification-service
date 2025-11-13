@@ -45,6 +45,7 @@ class NotifierPort(ABC):
     ):
         """Sends out notifications based on the event details"""
         ...
+
     @abstractmethod
     async def send_sms_notification(
         self,

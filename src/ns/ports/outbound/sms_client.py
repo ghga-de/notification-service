@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 
 class SmsClientPort(ABC):
     """Abstract description of an SMS client that can send messages"""
-    
+
     class SystemError(RuntimeError):
         """Raised when we fail to log in"""
 
@@ -34,6 +34,7 @@ class SmsClientPort(ABC):
         def __init__(self):
             message = "Failed to authenticate."
             super().__init__(message)
+
     class AccountError(RuntimeError):
         """Raised when we fail to log in"""
 
@@ -45,9 +46,7 @@ class SmsClientPort(ABC):
         """Raised by other errors (not failed connection or failed login)"""
 
         def __init__(self, error_info: str):
-            message = (
-                f"Encountered an issue while attempting to send SMS: {error_info}"
-            )
+            message = f"Encountered an issue while attempting to send SMS: {error_info}"
             super().__init__(message)
 
     @abstractmethod

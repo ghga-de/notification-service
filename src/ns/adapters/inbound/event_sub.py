@@ -59,7 +59,7 @@ class EventSubTranslator(EventSubscriberProtocol):
         )
 
         await self._notifier.send_email_notification(notification=validated_payload)
-    
+
     async def _send_sms_notification(self, *, payload: JsonObject):
         """Validates the schema, then makes a call to the notifier with the payload"""
         validated_payload = get_validated_payload(
@@ -67,6 +67,7 @@ class EventSubTranslator(EventSubscriberProtocol):
         )
 
         await self._notifier.send_sms_notification(notification=validated_payload)
+
     async def _consume_validated(
         self,
         *,

@@ -150,7 +150,7 @@ async def test_sms_notification(joint_fixture: JointFixture, httpx_mock: HTTPXMo
 
     await joint_fixture.kafka.publish_event(
         payload=notification_event.model_dump(),
-        type_="sms_notification",
+        type_=joint_fixture.config.sms_notification_type,
         topic=joint_fixture.config.notification_topic,
         event_id=TEST_EVENT_ID,
     )
@@ -182,7 +182,7 @@ async def test_failures(
 
     await joint_fixture.kafka.publish_event(
         payload=notification_event.model_dump(),
-        type_="sms_notification",
+        type_=joint_fixture.config.sms_notification_type,
         topic=joint_fixture.config.notification_topic,
         event_id=TEST_EVENT_ID,
     )
@@ -220,7 +220,7 @@ async def test_dlq(
 
     await joint_fixture.kafka.publish_event(
         payload=notification_event.model_dump(),
-        type_="sms_notification",
+        type_=joint_fixture.config.sms_notification_type,
         topic=joint_fixture.config.notification_topic,
         event_id=TEST_EVENT_ID,
     )

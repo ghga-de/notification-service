@@ -26,7 +26,8 @@ migration_wait_sec: 10
 mongo_dsn: '**********'
 mongo_timeout: null
 notification_topic: notifications
-notification_type: notification
+email_notification_type: email_notification
+sms_notification_type: sms_notification
 plaintext_email_template: 'Dear $recipient_name,
 
 

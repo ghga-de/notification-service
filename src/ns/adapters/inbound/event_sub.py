@@ -47,7 +47,10 @@ class EventSubTranslator(EventSubscriberProtocol):
         event_id_dao: EventIdDaoPort,
     ):
         self.topics_of_interest = [config.notification_topic]
-        self.types_of_interest = [config.notification_type, "sms_notification"]
+        self.types_of_interest = [
+            config.email_notification_type,
+            config.sms_notification_type,
+        ]
         self._config = config
         self._notifier = notifier
         self._event_id_dao = event_id_dao
@@ -88,9 +91,9 @@ class EventSubTranslator(EventSubscriberProtocol):
         # Let the DLQ handle any errors that bubble up
         log.info("Processing notification. Event_id=%s", event_id)
         match type_:
-            case "email_notification":
+            case self._config.email_notification_type:
                 await self._send_email_notification(payload=payload)
-            case "sms_notification":
+            case self._config.sms_notification_type:
                 await self._send_sms_notification(payload=payload)
             case _:
                 log.critical("Unexpected event type. Event_id=%s", event_id)

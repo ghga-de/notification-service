@@ -204,7 +204,7 @@ async def test_consume_thru_send(joint_fixture: JointFixture):
             "recipient_name": "Yolanda Martinez",
             "plaintext_body": "Where are you, where are you, Yolanda?",
         },
-        type_=joint_fixture.config.notification_type,
+        type_=joint_fixture.config.email_notification_type,
         topic=joint_fixture.config.notification_topic,
     )
 
@@ -225,7 +225,7 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
     # Publish the notification event (this is what the NOS would do upstream)
     await joint_fixture.kafka.publish_event(
         payload=notification_event.model_dump(),
-        type_=joint_fixture.config.notification_type,
+        type_=joint_fixture.config.email_notification_type,
         topic=joint_fixture.config.notification_topic,
         event_id=TEST_EVENT_ID,
     )
@@ -253,7 +253,7 @@ async def test_idempotence_and_transmission(joint_fixture: JointFixture):
     # Now publish the same event again
     await joint_fixture.kafka.publish_event(
         payload=notification_event.model_dump(),
-        type_=joint_fixture.config.notification_type,
+        type_=joint_fixture.config.email_notification_type,
         topic=joint_fixture.config.notification_topic,
         event_id=TEST_EVENT_ID,  # same event ID to ensure idempotence
     )

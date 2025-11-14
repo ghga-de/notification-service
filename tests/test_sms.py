@@ -16,10 +16,13 @@
 """Test basic event consumption"""
 
 import json
+from unittest.mock import Mock
 from uuid import UUID
 
 import pytest
 from hexkit.correlation import correlation_id_var
+from hexkit.providers.akafka.testutils import KafkaFixture
+from hexkit.providers.mongodb.testutils import MongoDbFixture
 from httpx import Request as HttpxRequest
 from jsonschema_path import SchemaPath
 from openapi_core.contrib.requests import (
@@ -30,6 +33,10 @@ from pytest_httpx import HTTPXMock
 from requests import PreparedRequest, Request
 
 from ns.adapters.outbound.sms_client import SmsClient
+from ns.adapters.outbound.smtp_client import SmtpClient
+from ns.core.notifier import Notifier
+from ns.inject import prepare_event_subscriber
+from tests.fixtures.config import get_config
 from tests.fixtures.joint import (
     JointFixture,
 )
@@ -156,6 +163,7 @@ async def test_sms_notification(joint_fixture: JointFixture, httpx_mock: HTTPXMo
     )
 
     await joint_fixture.event_subscriber.run(forever=False)
+    validate_performed_requests(httpx_mock)
     requests_made = httpx_mock.get_requests()
     assert len(requests_made) == 1
     request = requests_made[0]
@@ -164,6 +172,37 @@ async def test_sms_notification(joint_fixture: JointFixture, httpx_mock: HTTPXMo
     request_data = json.loads(request.content.decode())
     assert request_data["phone"] == SAMPLE_SMS_NOTIFICATION["phone"]
     assert request_data["text"] == SAMPLE_SMS_NOTIFICATION["text"]
+
+
+async def test_send_sms_not_email(
+    kafka: KafkaFixture,
+    mongodb: MongoDbFixture,
+):
+    """Test that when an SMS notification is sent, no email is sent."""
+    config = get_config(sources=[kafka.config, mongodb.config])
+    assert not config.kafka_enable_dlq
+
+    sms_client = Mock(spec=SmsClient)
+    smtp_mock = Mock(spec=SmtpClient)
+    notifier = Notifier(config=config, smtp_client=smtp_mock, sms_client=sms_client)
+    notification_event = make_sms_notification(SAMPLE_SMS_NOTIFICATION)
+
+    await kafka.publish_event(
+        payload=notification_event.model_dump(),
+        type_=config.sms_notification_type,
+        topic=config.notification_topic,
+        event_id=TEST_EVENT_ID,
+    )
+
+    async with (
+        prepare_event_subscriber(
+            config=config, notifier_override=notifier
+        ) as event_subscriber,
+    ):
+        await event_subscriber.run(forever=False)
+
+    assert smtp_mock.send_email_message.assert_not_called
+    assert sms_client.send_sms_message.assert_called_once
 
 
 @pytest.mark.parametrize("response", LOX24_STATUS_CODES)
@@ -204,7 +243,6 @@ async def test_failures(
     [(resp, {"kafka_enable_dlq": True}) for resp in LOX24_STATUS_CODES],
     indirect=["joint_fixture"],
 )
-# @pytest.mark.parametrize( "response", LOX24_STATUS_CODES)
 async def test_dlq(
     response: dict,
     httpx_mock: HTTPXMock,

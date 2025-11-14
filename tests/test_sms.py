@@ -30,10 +30,16 @@ from pytest_httpx import HTTPXMock
 from requests import PreparedRequest, Request
 
 from ns.adapters.outbound.sms_client import SmsClient
-from tests.fixtures.joint import JointFixture
+from tests.fixtures.joint import (
+    JointFixture,
+)
 from tests.fixtures.utils import make_sms_notification
 
 pytestmark = pytest.mark.asyncio()
+
+TEST_CORRELATION_ID = UUID("6914c8cd-1f18-43da-ac6c-c43cca3f36cc")
+
+TEST_EVENT_ID = UUID("f8b1c5d2-3e4f-4a5b-8c6d-7e8f9a0b1c2d")
 
 
 SAMPLE_SMS_NOTIFICATION = {
@@ -126,10 +132,6 @@ def validate_performed_requests(httpx_mock: HTTPXMock):
         request_validator.validate(openapi_request)
 
 
-TEST_CORRELATION_ID = UUID("6914c8cd-1f18-43da-ac6c-c43cca3f36cc")
-TEST_EVENT_ID = UUID("f8b1c5d2-3e4f-4a5b-8c6d-7e8f9a0b1c2d")
-
-
 @pytest.fixture(autouse=True)
 def correlation_id_fixture():
     """Provides a new correlation ID for each test case."""
@@ -166,7 +168,9 @@ async def test_sms_notification(joint_fixture: JointFixture, httpx_mock: HTTPXMo
 
 @pytest.mark.parametrize("response", LOX24_STATUS_CODES)
 async def test_failures(
-    response: dict, httpx_mock: HTTPXMock, joint_fixture: JointFixture
+    response: dict,
+    httpx_mock: HTTPXMock,
+    joint_fixture: JointFixture,
 ):
     """Test that in case of a failure not SMS is sent"""
     assert joint_fixture.config.kafka_enable_dlq == False
@@ -195,29 +199,37 @@ async def test_failures(
     validate_performed_requests(httpx_mock)
 
 
-@pytest.mark.parametrize("response", LOX24_STATUS_CODES)
-async def test_dlq(response: dict, httpx_mock: HTTPXMock, joint_fixture_dlq):
+@pytest.mark.parametrize(
+    "response, joint_fixture",
+    [(resp, {"kafka_enable_dlq": True}) for resp in LOX24_STATUS_CODES],
+    indirect=["joint_fixture"],
+)
+# @pytest.mark.parametrize( "response", LOX24_STATUS_CODES)
+async def test_dlq(
+    response: dict,
+    httpx_mock: HTTPXMock,
+    joint_fixture: JointFixture,
+):
     """Test that in case of a failure not SMS is sent"""
-    assert joint_fixture_dlq.config.kafka_enable_dlq
+    assert joint_fixture.config.kafka_enable_dlq
 
     httpx_mock.add_response(
         **{**LOX24_SMS_RESPONSE_MOCK, "status_code": response["status_code"]}
     )
     notification_event = make_sms_notification(SAMPLE_SMS_NOTIFICATION)
 
-    await joint_fixture_dlq.kafka.publish_event(
+    await joint_fixture.kafka.publish_event(
         payload=notification_event.model_dump(),
         type_="sms_notification",
-        topic=joint_fixture_dlq.config.notification_topic,
+        topic=joint_fixture.config.notification_topic,
         event_id=TEST_EVENT_ID,
     )
 
-    async with joint_fixture_dlq.kafka.record_events(
-        in_topic=joint_fixture_dlq.config.kafka_dlq_topic
+    async with joint_fixture.kafka.record_events(
+        in_topic=joint_fixture.config.kafka_dlq_topic
     ) as recorder:
         # Consume the event, which should error and get sent to the DLQ
-        # with pytest.raises(response["exception"]):
-        await joint_fixture_dlq.event_subscriber.run(forever=False)
+        await joint_fixture.event_subscriber.run(forever=False)
 
     # Assert a request has been made
     assert len(httpx_mock.get_requests()) == 1

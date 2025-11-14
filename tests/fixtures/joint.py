@@ -40,26 +40,17 @@ class JointFixture:
     notifier: NotifierPort
 
 
-@dataclass
-class JointFixtureDlq:
-    """Returned by joint_fixture"""
-
-    config: Config
-    kafka: KafkaFixture
-    mongodb: MongoDbFixture
-    event_subscriber: KafkaEventSubscriber
-    notifier: NotifierPort
-
-
-@pytest_asyncio.fixture()
+@pytest_asyncio.fixture(params=[{}])
 async def joint_fixture(
+    request,
     kafka: KafkaFixture,
     mongodb: MongoDbFixture,
 ) -> AsyncGenerator[JointFixture]:
     """A fixture that embeds all other fixtures for integration testing"""
     # merge configs from different sources with the default one:
-    config = get_config(sources=[kafka.config, mongodb.config, SMTP_TEST_CONFIG])
-
+    config = get_config(
+        sources=[kafka.config, mongodb.config, SMTP_TEST_CONFIG], **request.param
+    )
     # prepare the core and the event subscriber
     async with (
         prepare_core(config=config) as notifier,
@@ -68,34 +59,6 @@ async def joint_fixture(
         ) as event_subscriber,
     ):
         yield JointFixture(
-            config=config,
-            kafka=kafka,
-            mongodb=mongodb,
-            event_subscriber=event_subscriber,
-            notifier=notifier,
-        )
-
-
-@pytest_asyncio.fixture()
-async def joint_fixture_dlq(
-    kafka: KafkaFixture,
-    mongodb: MongoDbFixture,
-) -> AsyncGenerator[JointFixtureDlq]:
-    """A fixture that embeds all other fixtures for integration testing"""
-    # merge configs from different sources with the default one:
-    config = get_config(
-        sources=[kafka.config, mongodb.config, SMTP_TEST_CONFIG],
-        kafka_enable_dlq=True,
-    )
-
-    # prepare the core and the event subscriber
-    async with (
-        prepare_core(config=config) as notifier,
-        prepare_event_subscriber(
-            config=config, notifier_override=notifier
-        ) as event_subscriber,
-    ):
-        yield JointFixtureDlq(
             config=config,
             kafka=kafka,
             mongodb=mongodb,

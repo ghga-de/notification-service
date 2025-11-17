@@ -289,12 +289,12 @@ async def test_dlq(
             assert event.payload == notification_event.model_dump()
 
 
-@pytest.mark.skipif(os.getenv("LOX_24_TOKEN", "") == "", reason="LOX_24_TOKEN not set")
+@pytest.mark.skipif(os.getenv("LOX24_TOKEN", "") == "", reason="LOX24_TOKEN not set")
 async def test_lox24_integration(caplog):
     """Integration test for the Lox24 SMS client using the test endpoint"""
     config = Lox24ClientConfig(
         lox24_sms_send_path="/sms/dryrun",
-        lox24_token=SecretStr(os.getenv("LOX_24_TOKEN", "")),
+        lox24_token=SecretStr(os.getenv("LOX24_TOKEN", "")),
     )
     lox24_client = Lox24Client(config=config)
 

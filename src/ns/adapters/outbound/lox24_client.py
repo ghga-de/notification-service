@@ -44,7 +44,7 @@ class Lox24ClientConfig(BaseSettings):
         ),
     )
     lox24_sms_send_path: str = Field(
-        default="/sms", description="The path to send SMS messages"
+        default="/sms", description="The path for sending SMS messages"
     )
     lox24_auth_token_header: str = Field(
         default="X-LOX24-AUTH-TOKEN",
@@ -61,33 +61,23 @@ class Lox24Client(SmsClientPort):
     def __init__(self, *, config: Lox24ClientConfig):
         """Assign config, which should contain all needed info"""
         self._config = config
-        self._headers: dict[str, str] = {}
         self._response: Response | None = None
-        self._send_sms_url: str = (
-            f"https://{self._config.lox24_host}:{self._config.lox24_port}"
-            f"{self._config.lox24_sms_send_path}"
-        )
+        self._send_sms_url: str = f"https://{self._config.lox24_host}:{self._config.lox24_port}/{self._config.lox24_sms_send_path.lstrip('/')}"
         self._json_data: dict[str, str] = {"sender_id": self._config.lox24_sender_id}
+        self._headers: dict[str, str] = {
+            self._config.lox24_auth_token_header: self._config.lox24_token.get_secret_value()
+        }
 
-    def _add_auth_headers(self) -> None:
-        """Add authentication headers to the request headers."""
-        if self._config.lox24_token:
-            self._headers[self._config.lox24_auth_token_header] = (
-                self._config.lox24_token.get_secret_value()
-            )
-        else:
-            raise ValueError("SMS authentication configuration is missing.")
-
-    def _raise_for_status(self) -> None:
+    def _raise_for_status(self, response: Response) -> None:
         """Raise an exception if the response indicates an error."""
-        if self._response:
+        if response:
             try:
-                self._response.raise_for_status()
+                response.raise_for_status()
             except HTTPStatusError as e:
                 match e.response.status_code:
-                    case 400 | 404:
+                    case 400 | 404 | 422:
                         raise SmsClientPort.RequestError() from e
-                    case 401 | 402 | 403:
+                    case 401 | 402 | 403 | 429:
                         raise SmsClientPort.AccountError() from e
                     case 500 | 502 | 503 | 504:
                         raise SmsClientPort.SystemError() from e
@@ -96,18 +86,20 @@ class Lox24Client(SmsClientPort):
                             error_info=str(e)
                         ) from e
 
-    def send_sms_message(self, message: dict) -> None:
+    def send_sms_message(self, message: dict):
         """Send an SMS message to the Lox24 API."""
-        self._add_auth_headers()
         json_data = self._json_data | {
             "phone": message["phone"],
             "text": message["text"],
         }
-        log.info(f"Sending SMS to {json_data['phone']}")
-        self._response = post(
+        log.info(f"Sending SMS to {json_data['phone']}.")
+        response = post(
             self._send_sms_url,
             headers=self._headers,
             json=json_data,
             timeout=self._config.lox24_timeout,
         )
-        self._raise_for_status()
+        if response.status_code != 201:
+            self._raise_for_status(response)
+        uuid = response.json().get("uuid", "unknown")
+        log.info(f"SMS sent to {json_data['phone']}. Response UUID {uuid}")

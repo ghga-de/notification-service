@@ -88,10 +88,7 @@ class Lox24Client(SmsClientPort):
 
     def send_sms_message(self, message: dict):
         """Send an SMS message to the Lox24 API."""
-        json_data = self._json_data | {
-            "phone": message["phone"],
-            "text": message["text"],
-        }
+        json_data = self._json_data | message
         log.info(f"Sending SMS to {json_data['phone']}.")
         response = post(
             self._send_sms_url,

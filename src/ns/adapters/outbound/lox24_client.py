@@ -19,7 +19,7 @@
 import logging
 
 from httpx import HTTPStatusError, Response, post
-from pydantic import BaseModel, Field, PositiveFloat, SecretStr
+from pydantic import Field, PositiveFloat, SecretStr
 from pydantic_settings import BaseSettings
 
 from ns.ports.outbound.sms_client import SmsClientPort
@@ -27,44 +27,53 @@ from ns.ports.outbound.sms_client import SmsClientPort
 log = logging.getLogger(__name__)
 
 
-class SmsAuthConfig(BaseModel):
-    """Model to encapsulate SMS authentication details."""
+class Lox24ClientConfig(BaseSettings):
+    """Configuration details for the Lox24Client"""
 
-    auth_token: SecretStr = Field(default=..., description="The authentication token")
-
-
-class SmsClientConfig(BaseSettings):
-    """Configuration details for the SmsClient"""
-
-    sms_host: str = Field(default=..., description="The SMS gateway host to connect to")
-    sms_port: int = Field(
-        default=..., description="The port for the SMS gateway connection"
+    lox24_host: str = Field(
+        default="api.lox24.eu", description="The address of the lox24 API"
     )
-    sms_auth: SmsAuthConfig | None = Field(default=None, description="")
+    lox24_port: int = Field(default=443, description="The port of the lox24 API")
+    lox24_token: SecretStr = Field(default=..., description="The authentication token")
 
-    sms_timeout: PositiveFloat | None = Field(
-        default=60,
+    lox24_timeout: PositiveFloat | None = Field(
+        default=10,
         description=(
             "The maximum amount of time (in seconds) to wait for a connection to the"
-            + " SMS gateway. If set to `None`, the operation will wait indefinitely."
+            + " lox24 API. If set to `None`, the operation will wait indefinitely."
         ),
+    )
+    lox24_sms_send_path: str = Field(
+        default="/sms", description="The path to send SMS messages"
+    )
+    lox24_auth_token_header: str = Field(
+        default="X-LOX24-AUTH-TOKEN",
+        description="The header for the authentication token",
+    )
+    lox24_sender_id: str = Field(
+        default="GHGA", description="The sender ID to use when sending SMS messages"
     )
 
 
-class SmsClient(SmsClientPort):
-    """Concrete implementation of an SmsClientPort"""
+class Lox24Client(SmsClientPort):
+    """Concrete implementation of an SmsClientPort for the LOX24 SMS gateway."""
 
-    def __init__(self, *, config: SmsClientConfig):
+    def __init__(self, *, config: Lox24ClientConfig):
         """Assign config, which should contain all needed info"""
         self._config = config
         self._headers: dict[str, str] = {}
         self._response: Response | None = None
+        self._send_sms_url: str = (
+            f"https://{self._config.lox24_host}:{self._config.lox24_port}"
+            f"{self._config.lox24_sms_send_path}"
+        )
+        self._json_data: dict[str, str] = {"sender_id": self._config.lox24_sender_id}
 
     def _add_auth_headers(self) -> None:
         """Add authentication headers to the request headers."""
-        if self._config.sms_auth:
-            self._headers["X-LOX24-AUTH-TOKEN"] = (
-                self._config.sms_auth.auth_token.get_secret_value()
+        if self._config.lox24_token:
+            self._headers[self._config.lox24_auth_token_header] = (
+                self._config.lox24_token.get_secret_value()
             )
         else:
             raise ValueError("SMS authentication configuration is missing.")
@@ -88,18 +97,17 @@ class SmsClient(SmsClientPort):
                         ) from e
 
     def send_sms_message(self, message: dict) -> None:
-        """Send an SMS message using the configured SMS gateway."""
+        """Send an SMS message to the Lox24 API."""
         self._add_auth_headers()
-        json_data = {
+        json_data = self._json_data | {
             "phone": message["phone"],
             "text": message["text"],
-            "sender_id": "GHGA",
         }
         log.info(f"Sending SMS to {json_data['phone']}")
         self._response = post(
-            f"https://{self._config.sms_host}/sms",
+            self._send_sms_url,
             headers=self._headers,
             json=json_data,
-            timeout=100,
+            timeout=self._config.lox24_timeout,
         )
         self._raise_for_status()

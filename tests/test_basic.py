@@ -28,7 +28,7 @@ from hexkit.correlation import correlation_id_var
 from hexkit.protocols.dao import ResourceNotFoundError
 from pydantic import SecretStr
 
-from ns.adapters.outbound.sms_client import SmsClient
+from ns.adapters.outbound.lox24_client import Lox24Client
 from ns.adapters.outbound.smtp_client import (
     SmtpAuthConfig,
     SmtpClient,
@@ -323,7 +323,7 @@ async def test_timeout(port: int):
     )
     config = get_config(sources=[client_config])
     smtp_client = SmtpClient(config=config)
-    sms_client = SmsClient(config=config)
+    sms_client = Lox24Client(config=config)
     dao_mock = AsyncMock()
     dao_mock.get_by_id.side_effect = ResourceNotFoundError(id_=TEST_EVENT_ID)
 

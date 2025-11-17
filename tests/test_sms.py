@@ -32,7 +32,7 @@ from openapi_core.validation.request.validators import V30RequestValidator
 from pytest_httpx import HTTPXMock
 from requests import PreparedRequest, Request
 
-from ns.adapters.outbound.sms_client import SmsClient
+from ns.adapters.outbound.lox24_client import Lox24Client
 from ns.adapters.outbound.smtp_client import SmtpClient
 from ns.core.notifier import Notifier
 from ns.inject import prepare_event_subscriber
@@ -72,43 +72,43 @@ LOX24_STATUS_CODES = [
     },
     {
         "status_code": 401,
-        "exception": SmsClient.AccountError,
+        "exception": Lox24Client.AccountError,
     },
     {
         "status_code": 402,
-        "exception": SmsClient.AccountError,
+        "exception": Lox24Client.AccountError,
     },
     {
         "status_code": 403,
-        "exception": SmsClient.AccountError,
+        "exception": Lox24Client.AccountError,
     },
     {
         "status_code": 400,
-        "exception": SmsClient.RequestError,
+        "exception": Lox24Client.RequestError,
     },
     {
         "status_code": 404,
-        "exception": SmsClient.RequestError,
+        "exception": Lox24Client.RequestError,
     },
     {
         "status_code": 500,
-        "exception": SmsClient.SystemError,
+        "exception": Lox24Client.SystemError,
     },
     {
         "status_code": 502,
-        "exception": SmsClient.SystemError,
+        "exception": Lox24Client.SystemError,
     },
     {
         "status_code": 503,
-        "exception": SmsClient.SystemError,
+        "exception": Lox24Client.SystemError,
     },
     {
         "status_code": 504,
-        "exception": SmsClient.SystemError,
+        "exception": Lox24Client.SystemError,
     },
     {
         "status_code": 501,
-        "exception": SmsClient.GeneralSmsException,
+        "exception": Lox24Client.GeneralSmsException,
     },
 ]
 
@@ -182,7 +182,7 @@ async def test_send_sms_not_email(
     config = get_config(sources=[kafka.config, mongodb.config])
     assert not config.kafka_enable_dlq
 
-    sms_client = Mock(spec=SmsClient)
+    sms_client = Mock(spec=Lox24Client)
     smtp_mock = Mock(spec=SmtpClient)
     notifier = Notifier(config=config, smtp_client=smtp_mock, sms_client=sms_client)
     notification_event = make_sms_notification(SAMPLE_SMS_NOTIFICATION)

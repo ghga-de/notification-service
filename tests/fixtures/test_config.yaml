@@ -11,10 +11,7 @@ smtp_port: 587
 smtp_auth:
   username: "test@test.com"
   password: test
-sms_host: api.lox24.eu
-sms_port: 443
-sms_auth:
-  auth_token: valid_token
+lox24_token: "valid_token"
 use_starttls: false
 smtp_timeout: 2
 from_address: "test@test.com"

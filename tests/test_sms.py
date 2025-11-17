@@ -215,7 +215,7 @@ async def test_failures(
     httpx_mock: HTTPXMock,
     joint_fixture: JointFixture,
 ):
-    """Test that in case of a failure not SMS is sent"""
+    """Test that in case of a failure no SMS is sent"""
     assert joint_fixture.config.kafka_enable_dlq == False
 
     httpx_mock.add_response(

@@ -77,7 +77,7 @@ class SmsClient(SmsClientPort):
             except HTTPStatusError as e:
                 match e.response.status_code:
                     case 400 | 404:
-                        raise SmsClientPort.ResourceError() from e
+                        raise SmsClientPort.RequestError() from e
                     case 401 | 402 | 403:
                         raise SmsClientPort.AccountError() from e
                     case 500 | 502 | 503 | 504:

@@ -84,11 +84,11 @@ LOX24_STATUS_CODES = [
     },
     {
         "status_code": 400,
-        "exception": SmsClient.ResourceError,
+        "exception": SmsClient.RequestError,
     },
     {
         "status_code": 404,
-        "exception": SmsClient.ResourceError,
+        "exception": SmsClient.RequestError,
     },
     {
         "status_code": 500,

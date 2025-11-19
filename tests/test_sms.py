@@ -18,6 +18,7 @@
 import json
 import logging
 import os
+from typing import TypedDict
 from unittest.mock import Mock
 from uuid import UUID
 
@@ -57,7 +58,18 @@ SAMPLE_SMS_NOTIFICATION = {
     "text": "Where are you, where are you, Yolanda?",
 }
 
-LOX24_SMS_RESPONSE_MOCK = {
+
+class Lox24SmsResponseMock(TypedDict):
+    """Default mock definition for Lox24 SMS response."""
+
+    method: str
+    url: str
+    match_headers: dict[str, str]
+    match_json: dict[str, str]
+    json: dict[str, str]
+
+
+LOX24_SMS_RESPONSE_MOCK: Lox24SmsResponseMock = {
     "method": "POST",
     "url": "https://api.lox24.eu/sms",
     "match_headers": {"X-LOX24-AUTH-TOKEN": "valid_token"},

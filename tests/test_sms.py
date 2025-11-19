@@ -132,10 +132,7 @@ def validate_performed_requests(httpx_mock: HTTPXMock):
             method=httpx_request.method,
             url=str(httpx_request.url),
             headers=dict(httpx_request.headers),
-            data=httpx_request.content
-            or httpx_request.data
-            or httpx_request.stream
-            or None,
+            data=httpx_request.content or httpx_request.stream or None,
         ).prepare()
 
     for req in requests_made:

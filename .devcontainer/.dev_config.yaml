@@ -19,3 +19,4 @@ mongo_dsn: "mongodb://mongodb:27017"
 db_name: "dev_db"
 migration_wait_sec: 10
 db_version_collection: nsDbVersions
+lox24_token: ""

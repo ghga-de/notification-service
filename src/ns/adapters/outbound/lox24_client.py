@@ -86,10 +86,14 @@ class Lox24Client(SmsClientPort):
                             error_info=str(e)
                         ) from e
 
-    def send_sms_message(self, message: dict):
+    def send_sms_message(self, *, phone: str, text: str):
         """Send an SMS message to the Lox24 API."""
-        json_data = self._json_data | message
-        log.info(f"Sending SMS to {json_data['phone']}.")
+        json_data = {
+            "phone": phone,
+            "text": text,
+            **self._json_data,
+        }
+        log.info(f"Sending SMS to {phone}.")
         response = post(
             self._send_sms_url,
             headers=self._headers,
@@ -99,4 +103,4 @@ class Lox24Client(SmsClientPort):
         if response.status_code != 201:
             self._raise_for_status(response)
         uuid = response.json().get("uuid", "unknown")
-        log.info(f"SMS sent to {json_data['phone']}. Response UUID {uuid}")
+        log.info(f"SMS sent to {phone}. Response UUID {uuid}")

@@ -323,7 +323,7 @@ async def test_timeout(port: int):
     )
     config = get_config(sources=[client_config])
     smtp_client = SmtpClient(config=config)
-    sms_client = Mock(spec=Lox24Client)
+    sms_client = AsyncMock(spec=Lox24Client)
     dao_mock = AsyncMock()
     dao_mock.get_by_id.side_effect = ResourceNotFoundError(id_=TEST_EVENT_ID)
 

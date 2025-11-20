@@ -50,6 +50,6 @@ class SmsClientPort(ABC):
             super().__init__(message)
 
     @abstractmethod
-    def send_sms_message(self, message: dict):
+    def send_sms_message(self, *, phone: str, text: str):
         """Sends an SMS message"""
         ...

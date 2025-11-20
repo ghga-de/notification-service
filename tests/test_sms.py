@@ -261,7 +261,9 @@ async def test_lox24_integration(caplog):
     lox24_client = Lox24Client(config=config)
 
     with caplog.at_level(logging.INFO, logger="ns.adapters.outbound.lox24_client"):
-        lox24_client.send_sms_message(SAMPLE_SMS_NOTIFICATION)
+        lox24_client.send_sms_message(
+            phone=SAMPLE_SMS_NOTIFICATION["phone"], text=SAMPLE_SMS_NOTIFICATION["text"]
+        )
         assert (
             f"SMS sent to {SAMPLE_SMS_NOTIFICATION['phone']}. Response UUID 11111111-2222-3333-4444-555555555555"
             in caplog.text

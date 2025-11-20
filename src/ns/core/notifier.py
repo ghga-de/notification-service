@@ -82,7 +82,7 @@ class Notifier(NotifierPort):
     ):
         """Sends out notifications based on the event details"""
         message = notification.model_dump()
-        self._sms_client.send_sms_message(message)
+        self._sms_client.send_sms_message(phone=message["phone"], text=message["text"])
 
     def _build_email_subtype(
         self, *, template_type: EmailTemplateType, email_vars: dict[str, str]

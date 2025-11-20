@@ -63,7 +63,7 @@ class Lox24Client(SmsClientPort):
         self._config = config
         self._response: Response | None = None
         self._send_sms_url: str = f"https://{self._config.lox24_host}:{self._config.lox24_port}/{self._config.lox24_sms_send_path.lstrip('/')}"
-        self._json_data: dict[str, str] = {"sender_id": self._config.lox24_sender_id}
+        self._sender_id: str = self._config.lox24_sender_id
         self._headers: dict[str, str] = {
             self._config.lox24_auth_token_header: self._config.lox24_token.get_secret_value()
         }
@@ -91,7 +91,7 @@ class Lox24Client(SmsClientPort):
         json_data = {
             "phone": phone,
             "text": text,
-            **self._json_data,
+            "sender_id": self._sender_id,
         }
         log.info(f"Sending SMS to {phone}.")
         response = post(

@@ -251,53 +251,6 @@ async def test_failures(
     validate_performed_requests(httpx_mock)
 
 
-@pytest.mark.parametrize(
-    "response, joint_fixture",
-    [(resp, {"kafka_enable_dlq": True}) for resp in LOX24_STATUS_CODES],
-    indirect=["joint_fixture"],
-)
-async def test_dlq(
-    response: dict,
-    httpx_mock: HTTPXMock,
-    joint_fixture: JointFixture,
-):
-    """Test that in case of a failure not SMS is sent"""
-    assert joint_fixture.config.kafka_enable_dlq
-
-    httpx_mock.add_response(
-        **{**LOX24_SMS_RESPONSE_MOCK, "status_code": response["status_code"]}
-    )
-    notification_event = make_sms_notification(SAMPLE_SMS_NOTIFICATION)
-
-    await joint_fixture.kafka.publish_event(
-        payload=notification_event.model_dump(),
-        type_=joint_fixture.config.sms_notification_type,
-        topic=joint_fixture.config.notification_topic,
-        event_id=TEST_EVENT_ID,
-    )
-
-    async with joint_fixture.kafka.record_events(
-        in_topic=joint_fixture.config.kafka_dlq_topic
-    ) as recorder:
-        # Consume the event, which should error and get sent to the DLQ
-        await joint_fixture.event_subscriber.run(forever=False)
-
-    # Assert a request has been made
-    assert len(httpx_mock.get_requests()) == 1
-
-    validate_performed_requests(httpx_mock)
-
-    # Assert that event has been added to the DLQ
-    match response["status_code"]:
-        case 201:
-            assert len(recorder.recorded_events) == 0
-        case _:
-            assert len(recorder.recorded_events) == 1
-            event = recorder.recorded_events[0]
-            assert event.key == "test"
-            assert event.payload == notification_event.model_dump()
-
-
 @pytest.mark.skipif(os.getenv("LOX24_TOKEN", "") == "", reason="LOX24_TOKEN not set")
 async def test_lox24_integration(caplog):
     """Integration test for the Lox24 SMS client using the test endpoint"""

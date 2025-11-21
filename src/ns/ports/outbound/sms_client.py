@@ -25,7 +25,7 @@ class SmsClientPort(ABC):
         """Raised when SMS gateway behaves unexpectedly"""
 
         def __init__(self):
-            message = "Contact the LOX24 support."
+            message = "Gateway system error occurred."
             super().__init__(message)
 
     class RequestError(RuntimeError):

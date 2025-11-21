@@ -100,7 +100,16 @@ class Lox24Client(SmsClientPort):
             json=json_data,
             timeout=self._config.lox24_timeout,
         )
-        if response.status_code != 201:
-            self._raise_for_status(response)
+        try:
+            if response.status_code != 201:
+                self._raise_for_status(response)
+        except Exception as err:
+            log.error(
+                "Received a %i status code when trying to send SMS. Response payload: %s",
+                response.status_code,
+                response.json(),
+                exc_info=True,
+            )
+            raise err
         uuid = response.json().get("uuid", "unknown")
         log.info(f"SMS sent to {phone}. Response UUID {uuid}")

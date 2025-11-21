@@ -68,23 +68,23 @@ class Lox24Client(SmsClientPort):
             self._config.lox24_auth_token_header: self._config.lox24_token.get_secret_value()
         }
 
-    def _raise_for_status(self, response: Response) -> None:
+    def _raise_for_status(self, response: Response):
         """Raise an exception if the response indicates an error."""
         if response:
             try:
                 response.raise_for_status()
-            except HTTPStatusError as e:
-                match e.response.status_code:
+            except HTTPStatusError as err:
+                match err.response.status_code:
                     case 400 | 404 | 422:
-                        raise SmsClientPort.RequestError() from e
+                        raise SmsClientPort.RequestError() from err
                     case 401 | 402 | 403 | 429:
-                        raise SmsClientPort.AccountError() from e
+                        raise SmsClientPort.AccountError() from err
                     case 500 | 502 | 503 | 504:
-                        raise SmsClientPort.SystemError() from e
+                        raise SmsClientPort.SystemError() from err
                     case _:
                         raise SmsClientPort.GeneralSmsException(
-                            error_info=str(e)
-                        ) from e
+                            error_info=str(err)
+                        ) from err
 
     def send_sms_message(self, *, phone: str, text: str):
         """Send an SMS message to the Lox24 API."""

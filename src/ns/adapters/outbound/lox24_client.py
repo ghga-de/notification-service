@@ -68,7 +68,7 @@ class Lox24Client(SmsClientPort):
         self._config = config
         self._response: Response | None = None
         self._sender_id: str = self._config.lox24_sender_id
-        self._send_url: URL = URL(str(self._config.lox24_send_url))
+        self._send_url: URL = self._config.lox24_send_url
         self._headers: dict[str, str] = {
             self._config.lox24_auth_token_header: self._config.lox24_token.get_secret_value()
         }

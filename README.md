@@ -167,14 +167,13 @@ The service requires the following configuration parameters:
 - <a id="properties/plaintext_email_template"></a>**`plaintext_email_template`** *(string, required)*: The plaintext template to use for email notifications.
 - <a id="properties/html_email_template"></a>**`html_email_template`** *(string, required)*: The HTML template to use for email notifications.
 - <a id="properties/from_address"></a>**`from_address`** *(string, format: email, required)*: The sender's address.
-- <a id="properties/lox24_host"></a>**`lox24_host`** *(string)*: The address of the lox24 API. Default: `"api.lox24.eu"`.
-- <a id="properties/lox24_port"></a>**`lox24_port`** *(integer)*: The port of the lox24 API. Default: `443`.
+- <a id="properties/lox24_base_url"></a>**`lox24_base_url`** *(string, format: uri)*: The base URL of the lox24 API. Length must be between 1 and 2083 (inclusive). Default: `"https://api.lox24.eu:443"`.
 - <a id="properties/lox24_token"></a>**`lox24_token`** *(string, format: password, required and write-only)*: The authentication token.
 - <a id="properties/lox24_timeout"></a>**`lox24_timeout`**: The maximum amount of time (in seconds) to wait for a connection to the lox24 API. If set to `None`, the operation will wait indefinitely. Default: `10`.
   - **Any of**
     - <a id="properties/lox24_timeout/anyOf/0"></a>*number*: Exclusive minimum: `0`.
     - <a id="properties/lox24_timeout/anyOf/1"></a>*null*
-- <a id="properties/lox24_sms_send_path"></a>**`lox24_sms_send_path`** *(string)*: The path for sending SMS messages. Default: `"/sms"`.
+- <a id="properties/lox24_send_sms_path"></a>**`lox24_send_sms_path`** *(string)*: The path for sending SMS messages. Default: `"sms"`.
 - <a id="properties/lox24_auth_token_header"></a>**`lox24_auth_token_header`** *(string)*: The header for the authentication token. Default: `"X-LOX24-AUTH-TOKEN"`.
 - <a id="properties/lox24_sender_id"></a>**`lox24_sender_id`** *(string)*: The sender ID to use when sending SMS messages. Default: `"GHGA"`.
 - <a id="properties/smtp_host"></a>**`smtp_host`** *(string, required)*: The mail server host to connect to.

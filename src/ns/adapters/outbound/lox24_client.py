@@ -18,8 +18,8 @@
 
 import logging
 
-from httpx import HTTPStatusError, Response, post
-from pydantic import Field, PositiveFloat, SecretStr
+from httpx import URL, HTTPStatusError, Response, post
+from pydantic import Field, HttpUrl, PositiveFloat, SecretStr
 from pydantic_settings import BaseSettings
 
 from ns.ports.outbound.sms_client import SmsClientPort
@@ -30,12 +30,10 @@ log = logging.getLogger(__name__)
 class Lox24ClientConfig(BaseSettings):
     """Configuration details for the Lox24Client"""
 
-    lox24_host: str = Field(
-        default="api.lox24.eu", description="The address of the lox24 API"
-    )
-    lox24_port: int = Field(default=443, description="The port of the lox24 API")
+    lox24_base_url: HttpUrl = Field(
+        default="https://api.lox24.eu:443", description="The base URL of the lox24 API"
+    )  # type: ignore
     lox24_token: SecretStr = Field(default=..., description="The authentication token")
-
     lox24_timeout: PositiveFloat | None = Field(
         default=10,
         description=(
@@ -43,8 +41,8 @@ class Lox24ClientConfig(BaseSettings):
             + " lox24 API. If set to `None`, the operation will wait indefinitely."
         ),
     )
-    lox24_sms_send_path: str = Field(
-        default="/sms", description="The path for sending SMS messages"
+    lox24_send_sms_path: str = Field(
+        default="sms", description="The path for sending SMS messages"
     )
     lox24_auth_token_header: str = Field(
         default="X-LOX24-AUTH-TOKEN",
@@ -54,6 +52,13 @@ class Lox24ClientConfig(BaseSettings):
         default="GHGA", description="The sender ID to use when sending SMS messages"
     )
 
+    @property
+    def lox24_send_url(self) -> URL:
+        """Full URL for sending SMS."""
+        url = URL(str(self.lox24_base_url))
+        url = url.join(self.lox24_send_sms_path)
+        return url
+
 
 class Lox24Client(SmsClientPort):
     """Concrete implementation of an SmsClientPort for the LOX24 SMS gateway."""
@@ -62,8 +67,8 @@ class Lox24Client(SmsClientPort):
         """Assign config, which should contain all needed info"""
         self._config = config
         self._response: Response | None = None
-        self._send_sms_url: str = f"https://{self._config.lox24_host}:{self._config.lox24_port}/{self._config.lox24_sms_send_path.lstrip('/')}"
         self._sender_id: str = self._config.lox24_sender_id
+        self._send_url: URL = URL(str(self._config.lox24_send_url))
         self._headers: dict[str, str] = {
             self._config.lox24_auth_token_header: self._config.lox24_token.get_secret_value()
         }
@@ -95,7 +100,7 @@ class Lox24Client(SmsClientPort):
         }
         log.info(f"Sending SMS to {phone}.")
         response = post(
-            self._send_sms_url,
+            self._send_url,
             headers=self._headers,
             json=json_data,
             timeout=self._config.lox24_timeout,

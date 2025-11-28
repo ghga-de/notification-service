@@ -23,10 +23,9 @@ log_format: null
 log_level: INFO
 log_traceback: true
 lox24_auth_token_header: X-LOX24-AUTH-TOKEN
-lox24_host: api.lox24.eu
-lox24_port: 443
+lox24_base_url: https://api.lox24.eu/
+lox24_send_sms_path: sms
 lox24_sender_id: GHGA
-lox24_sms_send_path: /sms
 lox24_timeout: 10.0
 lox24_token: ''
 migration_max_wait_sec: null

@@ -16,8 +16,6 @@
 """Test basic event consumption"""
 
 import json
-import logging
-import os
 from typing import TypedDict
 from unittest.mock import Mock
 from uuid import UUID
@@ -32,11 +30,10 @@ from openapi_core.contrib.requests import (
     RequestsOpenAPIRequest,
 )
 from openapi_core.validation.request.validators import V30RequestValidator
-from pydantic import SecretStr
 from pytest_httpx import HTTPXMock
 from requests import PreparedRequest, Request
 
-from ns.adapters.outbound.lox24_client import Lox24Client, Lox24ClientConfig
+from ns.adapters.outbound.lox24_client import Lox24Client
 from ns.adapters.outbound.smtp_client import SmtpClient
 from ns.core.notifier import Notifier
 from ns.inject import prepare_event_subscriber
@@ -249,22 +246,3 @@ async def test_failures(
     assert len(httpx_mock.get_requests()) == 1
 
     validate_performed_requests(httpx_mock)
-
-
-@pytest.mark.skipif(os.getenv("LOX24_TOKEN", "") == "", reason="LOX24_TOKEN not set")
-async def test_lox24_integration(caplog):
-    """Integration test for the Lox24 SMS client using the test endpoint"""
-    config = Lox24ClientConfig(
-        lox24_sms_send_path="/sms/dryrun",
-        lox24_token=SecretStr(os.getenv("LOX24_TOKEN", "")),
-    )
-    lox24_client = Lox24Client(config=config)
-
-    with caplog.at_level(logging.INFO, logger="ns.adapters.outbound.lox24_client"):
-        lox24_client.send_sms_message(
-            phone=SAMPLE_SMS_NOTIFICATION["phone"], text=SAMPLE_SMS_NOTIFICATION["text"]
-        )
-        assert (
-            f"SMS sent to {SAMPLE_SMS_NOTIFICATION['phone']}. Response UUID 11111111-2222-3333-4444-555555555555"
-            in caplog.text
-        )

@@ -1,12 +1,12 @@
 [project]
 name = "ns"
-version = "6.0.1"
+version = "6.1.0"
 description = "The Notification Service (NS) handles notification kafka events."
 dependencies = [
     "typer>=0.19",
     "ghga-event-schemas~=11.0",
-    "ghga-service-commons>=5.1",
-    "hexkit[akafka,mongodb]>=7.1",
+    "ghga-service-commons>=7",
+    "hexkit[akafka,mongodb]>=8",
     "httpx>=0.28.1, <1",
 ]
 

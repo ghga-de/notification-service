@@ -18,7 +18,7 @@
 
 import logging
 
-from httpx import URL, HTTPStatusError, Response, post
+from httpx2 import URL, HTTPStatusError, Response, post
 from pydantic import Field, HttpUrl, PositiveFloat, SecretStr
 from pydantic_settings import BaseSettings
 
@@ -56,8 +56,7 @@ class Lox24ClientConfig(BaseSettings):
     def lox24_send_url(self) -> URL:
         """Full URL for sending SMS."""
         url = URL(str(self.lox24_base_url))
-        url = url.join(self.lox24_send_sms_path)
-        return url
+        return url.join(self.lox24_send_sms_path)
 
 
 class Lox24Client(SmsClientPort):

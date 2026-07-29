@@ -7,3 +7,6 @@
 testcontainers[kafka]>=4.12,<4.13
 aiosmtpd>=1.4.6,<1.5
 openapi-core>=0.19.5
+
+# mocking for httpx2 (the template still ships pytest-httpx for httpx)
+pytest-httpx2>=1

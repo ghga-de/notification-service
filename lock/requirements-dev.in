@@ -8,6 +8,5 @@ testcontainers[kafka]>=4.12,<4.13
 aiosmtpd>=1.4.6,<1.5
 openapi-core>=0.19.5
 
-# needed to import ghga_service_commons.api.mock_router, which is used to mock the
-# Lox24 SMS gateway in the tests (its package __init__ pulls in FastAPI/uvicorn)
+# needed for ghga_service_commons.api.mock_router
 ghga-service-commons[api]>=8

@@ -233,9 +233,9 @@ h11==0.16.0 \
     # via
     #   -c /workspace/lock/requirements-dev.txt
     #   httpcore2
-hexkit==8.6.0 \
-    --hash=sha256:fa27d6151e3a888ab401124a040bcb40ac3d0c69d63d14727f10795bf97947be \
-    --hash=sha256:faecfc22e3b9ccb9ad3015aae4345468c7c40d2a40f1b1af2a4b4e9c9b759ded
+hexkit==9.0.0 \
+    --hash=sha256:1377a5f34f70b7d395eb1395a732bc430265575a966eb5c0c7e81be95b89f222 \
+    --hash=sha256:eb0db74c4361694d76ef1bac50830390f9413c48a7abe2ac11ad821f58173620
     # via
     #   -c /workspace/lock/requirements-dev.txt
     #   ns (pyproject.toml)

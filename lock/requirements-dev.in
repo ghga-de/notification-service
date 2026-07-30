@@ -8,5 +8,6 @@ testcontainers[kafka]>=4.12,<4.13
 aiosmtpd>=1.4.6,<1.5
 openapi-core>=0.19.5
 
-# mocking for httpx2 (the template still ships pytest-httpx for httpx)
-pytest-httpx2>=1
+# needed to import ghga_service_commons.api.mock_router, which is used to mock the
+# Lox24 SMS gateway in the tests (its package __init__ pulls in FastAPI/uvicorn)
+ghga-service-commons[api]>=8

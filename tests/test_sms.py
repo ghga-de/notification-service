@@ -19,18 +19,10 @@ import json
 from unittest.mock import Mock
 from uuid import UUID
 
-import httpx  # only used for the request objects that respx records, see below
 import pytest
-import respx
 from hexkit.correlation import correlation_id_var
 from hexkit.providers.akafka.testutils import KafkaFixture
 from hexkit.providers.mongodb.testutils import MongoDbFixture
-from jsonschema_path import SchemaPath
-from openapi_core.contrib.requests import (
-    RequestsOpenAPIRequest,
-)
-from openapi_core.validation.request.validators import V30RequestValidator
-from requests import PreparedRequest, Request
 
 from ns.adapters.outbound.lox24_client import Lox24Client
 from ns.adapters.outbound.smtp_client import SmtpClient
@@ -53,25 +45,6 @@ SAMPLE_SMS_NOTIFICATION = {
     "phone": "+491234567890",
     "text": "Where are you, where are you, Yolanda?",
 }
-
-
-LOX24_SEND_SMS_URL = "https://api.lox24.eu/sms"
-
-
-def mock_lox24_send_sms(httpx2_mock: respx.Router, status_code: int) -> respx.Route:
-    """Register the Lox24 send-SMS route, responding with the given status code."""
-    return httpx2_mock.post(
-        LOX24_SEND_SMS_URL,
-        headers__contains={"X-LOX24-AUTH-TOKEN": "valid_token"},
-        json={
-            "phone": SAMPLE_SMS_NOTIFICATION["phone"],
-            "text": SAMPLE_SMS_NOTIFICATION["text"],
-            "sender_id": "GHGA",
-        },
-    ).respond(
-        status_code=status_code,
-        json={"uuid": "00000000-0000-0000-0000-000000000000"},
-    )
 
 
 LOX24_STATUS_CODES = [
@@ -122,38 +95,6 @@ LOX24_STATUS_CODES = [
 ]
 
 
-def get_requests(httpx2_mock: respx.Router) -> list[httpx.Request]:
-    """Return the requests recorded by the mock.
-
-    respx records calls as `httpx.Request` objects rather than `httpx2.Request` ones,
-    but the two classes share the same API.
-    """
-    return [call.request for call in httpx2_mock.calls]
-
-
-def validate_performed_requests(httpx2_mock: respx.Router):
-    """Validate that all requests arrived at the mock are valid according to the Lox24 OpenAPI spec."""
-    with open("tests/fixtures/lox24_openapi.json") as f:
-        spec_dict = json.loads(f.read())
-    spec = SchemaPath.from_dict(spec_dict)
-
-    request_validator = V30RequestValidator(spec)
-    requests_made = get_requests(httpx2_mock)
-
-    def httpx_to_requests(httpx_request: httpx.Request) -> PreparedRequest:
-        """OpenAPI package can only validate request.Request not httpx.Request"""
-        return Request(
-            method=httpx_request.method,
-            url=str(httpx_request.url),
-            headers=dict(httpx_request.headers),
-            data=httpx_request.content or httpx_request.stream or None,  # type: ignore
-        ).prepare()
-
-    for req in requests_made:
-        openapi_request = RequestsOpenAPIRequest(httpx_to_requests(req))
-        request_validator.validate(openapi_request)
-
-
 @pytest.fixture(autouse=True)
 def correlation_id_fixture():
     """Provides a new correlation ID for each test case."""
@@ -164,10 +105,9 @@ def correlation_id_fixture():
     correlation_id_var.reset(token)
 
 
-async def test_sms_notification(joint_fixture: JointFixture, httpx2_mock: respx.Router):
+async def test_sms_notification(joint_fixture: JointFixture):
     """Basic test"""
     assert not joint_fixture.config.kafka_enable_dlq
-    mock_lox24_send_sms(httpx2_mock, status_code=201)
     notification_event = make_sms_notification(SAMPLE_SMS_NOTIFICATION)
 
     await joint_fixture.kafka.publish_event(
@@ -178,8 +118,8 @@ async def test_sms_notification(joint_fixture: JointFixture, httpx2_mock: respx.
     )
 
     await joint_fixture.event_subscriber.run(forever=False)
-    validate_performed_requests(httpx2_mock)
-    requests_made = get_requests(httpx2_mock)
+    joint_fixture.lox24.validate_requests()
+    requests_made = joint_fixture.lox24.requests
     assert len(requests_made) == 1
     request = requests_made[0]
     assert request.headers["host"] == "api.lox24.eu"
@@ -187,6 +127,7 @@ async def test_sms_notification(joint_fixture: JointFixture, httpx2_mock: respx.
     request_data = json.loads(request.content.decode())
     assert request_data["phone"] == SAMPLE_SMS_NOTIFICATION["phone"]
     assert request_data["text"] == SAMPLE_SMS_NOTIFICATION["text"]
+    assert request_data["sender_id"] == joint_fixture.config.lox24_sender_id
 
 
 async def test_send_sms_not_email(
@@ -223,13 +164,12 @@ async def test_send_sms_not_email(
 @pytest.mark.parametrize("response", LOX24_STATUS_CODES)
 async def test_failures(
     response: dict,
-    httpx2_mock: respx.Router,
     joint_fixture: JointFixture,
 ):
     """Test that in case of a failure no SMS is sent"""
     assert not joint_fixture.config.kafka_enable_dlq
 
-    mock_lox24_send_sms(httpx2_mock, status_code=response["status_code"])
+    joint_fixture.lox24.status_code = response["status_code"]
     notification_event = make_sms_notification(SAMPLE_SMS_NOTIFICATION)
 
     await joint_fixture.kafka.publish_event(
@@ -246,6 +186,6 @@ async def test_failures(
     else:
         await joint_fixture.event_subscriber.run(forever=False)
     # Assert a request has been made
-    assert len(get_requests(httpx2_mock)) == 1
+    assert len(joint_fixture.lox24.requests) == 1
 
-    validate_performed_requests(httpx2_mock)
+    joint_fixture.lox24.validate_requests()

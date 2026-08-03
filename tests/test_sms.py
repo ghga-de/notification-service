@@ -95,6 +95,14 @@ LOX24_STATUS_CODES = [
 ]
 
 
+def expected_sms_payload(joint_fixture: JointFixture) -> dict[str, str]:
+    """The exact payload the Lox24 gateway should receive for the sample notification."""
+    return {
+        **SAMPLE_SMS_NOTIFICATION,
+        "sender_id": joint_fixture.config.lox24_sender_id,
+    }
+
+
 @pytest.fixture(autouse=True)
 def correlation_id_fixture():
     """Provides a new correlation ID for each test case."""
@@ -108,6 +116,7 @@ def correlation_id_fixture():
 async def test_sms_notification(joint_fixture: JointFixture):
     """Basic test"""
     assert not joint_fixture.config.kafka_enable_dlq
+    joint_fixture.lox24.expected_json = expected_sms_payload(joint_fixture)
     notification_event = make_sms_notification(SAMPLE_SMS_NOTIFICATION)
 
     await joint_fixture.kafka.publish_event(
@@ -170,6 +179,7 @@ async def test_failures(
     assert not joint_fixture.config.kafka_enable_dlq
 
     joint_fixture.lox24.status_code = response["status_code"]
+    joint_fixture.lox24.expected_json = expected_sms_payload(joint_fixture)
     notification_event = make_sms_notification(SAMPLE_SMS_NOTIFICATION)
 
     await joint_fixture.kafka.publish_event(

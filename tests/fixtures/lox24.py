@@ -39,12 +39,14 @@ SENT_SMS_UUID = "00000000-0000-0000-0000-000000000000"
 class Lox24Mock:
     """Mock of the Lox24 SMS gateway that records every request it receives.
 
-    `status_code` determines what the send-SMS endpoint responds with. It can be
-    changed at any point before the request under test is made.
+    `status_code` determines what the send-SMS endpoint responds with, and
+    `expected_json` the payload it accepts. Both can be changed at any point before
+    the request under test is made.
     """
 
     def __init__(self, *, auth_token: str, auth_token_header: str):
         self.status_code: int = 201
+        self.expected_json: dict[str, str] | None = None
         self.requests: list[Request] = []
         self._auth_token = auth_token
         self._auth_token_header = auth_token_header
@@ -54,9 +56,27 @@ class Lox24Mock:
     def send_sms(self, request: Request) -> Response:
         """Record the request and respond with the configured status code."""
         self.requests.append(request)
-        if request.headers.get(self._auth_token_header) != self._auth_token:
-            return Response(status_code=401, json={"message": "Invalid token"})
+        self._match_request(request)
         return Response(status_code=self.status_code, json={"uuid": SENT_SMS_UUID})
+
+    def _match_request(self, request: Request):
+        """Raise unless the request carries the expected auth token and payload.
+
+        An unexpected request is rejected rather than answered, because any response
+        would be indistinguishable from the one configured for the test at hand.
+        """
+        token = request.headers.get(self._auth_token_header)
+        if token != self._auth_token:
+            raise AssertionError(
+                f"Expected the {self._auth_token_header} header to be"
+                + f" {self._auth_token!r}, got {token!r}"
+            )
+        if self.expected_json is not None:
+            payload = json.loads(request.content)
+            if payload != self.expected_json:
+                raise AssertionError(
+                    f"Expected the payload to be {self.expected_json}, got {payload}"
+                )
 
     def as_transport(self) -> BaseTransport:
         """Return a transport that routes requests to this mock."""

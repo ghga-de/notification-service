@@ -7,3 +7,6 @@
 testcontainers[kafka]>=4.12,<4.13
 aiosmtpd>=1.4.6,<1.5
 openapi-core>=0.19.5
+
+# needed for ghga_service_commons.api.mock_router
+ghga-service-commons[api]>=8
